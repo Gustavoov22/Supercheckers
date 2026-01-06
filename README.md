@@ -2,6 +2,18 @@
 
 A modern 10x10 checkerboard game built with HTML, CSS, and JavaScript.
 
+## 🆕 NEW FEATURES - Advanced Rules!
+
+### Queen Pieces 👑
+- **Automatic Promotion**: When a piece reaches the opposite side, it becomes a QUEEN!
+- **Unlimited Movement**: Queens can move any distance diagonally (like bishops in chess)
+- **Multi-Capture**: Queens can capture multiple pieces in a single turn
+- **Any Direction**: Queens can move/capture in all 4 diagonal directions
+
+### Enhanced Gameplay
+- **Multi-Capture Chains**: Continue capturing as long as you have valid moves
+- **Strategic Depth**: Queens dominate the board but require skill to create
+
 ## Features
 
 - **10x10 Checkerboard**: Larger than traditional 8x8 boards for more strategic gameplay
@@ -12,11 +24,30 @@ A modern 10x10 checkerboard game built with HTML, CSS, and JavaScript.
 
 ## How to Play
 
+### Basic Rules
 1. **Red starts first** (top pieces)
 2. **Click on your piece** to select it (it will turn gold)
 3. **Click on an adjacent diagonal square** to move
 4. **Red moves down**, **Black moves up** (diagonally)
 5. **Alternate turns** until someone wins or quits
+
+### Advanced Rules
+
+#### Regular Pieces
+- Move **one square diagonally forward**
+- Can **capture** by jumping over opponent pieces
+- **Cannot** move backward
+
+#### Queen Pieces (👑)
+- **Promotion**: Automatically becomes queen when reaching opposite side
+- **Movement**: Can move ANY distance diagonally (forward or backward)
+- **Capturing**: Can capture multiple pieces in one turn
+- **Strategy**: Queens are powerful - protect them!
+
+#### Capturing
+- **Single Capture**: Jump over one opponent piece to empty square
+- **Multi-Capture (Queens)**: Capture multiple pieces in a line
+- **Chain Capture**: Continue capturing if more opportunities exist
 
 ## File Structure
 
@@ -24,7 +55,7 @@ A modern 10x10 checkerboard game built with HTML, CSS, and JavaScript.
 Supercheckers/
 ├── index.html      # Main HTML file
 ├── style.css       # Styling and layout
-├── script.js       # Game logic and interactivity
+├── script.js       # Game logic and interactivity (ENHANCED)
 └── README.md       # This file
 ```
 
@@ -44,24 +75,33 @@ chrome index.html
 
 - **HTML5**: Semantic structure
 - **CSS3**: Grid layout, gradients, and animations
-- **JavaScript ES6+**: Game logic and DOM manipulation
+- **JavaScript ES6+**: Advanced game logic with queen mechanics
 
-## Game Rules
+## Game Rules Summary
 
-- Players take turns moving one piece at a time
-- Pieces move diagonally forward (one square)
-- Cannot move onto occupied squares
-- No capturing implemented in this version
-- Game continues until manually reset
+| Feature | Regular Piece | Queen Piece |
+|---------|---------------|-------------|
+| **Movement** | 1 square forward | Any distance, any direction |
+| **Capture** | Single jump | Multiple pieces in line |
+| **Promotion** | Reach opposite side | - |
+| **Symbol** | ● | 👑 |
+
+## Strategy Tips
+
+1. **Protect your pieces** - losing pieces early is costly
+2. **Create queens** - they're game-changers!
+3. **Control the center** - more mobility options
+4. **Watch for multi-captures** - queens can clear the board
+5. **Don't rush** - plan your queen promotion carefully
 
 ## Future Enhancements
 
-- [ ] Piece capturing mechanics
-- [ ] King pieces (crown when reaching opposite side)
+- [ ] Score tracking and win conditions
 - [ ] Move history and undo functionality
-- [ ] AI opponent
-- [ ] Score tracking
+- [ ] AI opponent with difficulty levels
 - [ ] Online multiplayer
+- [ ] Sound effects and animations
+- [ ] Game timer
 
 ## License
 
@@ -69,4 +109,4 @@ MIT License - Feel free to use and modify!
 
 ## Author
 
-Created with ❤️ using Agent Zero
+Created with Agent Zero - Enhanced with advanced checker rules
