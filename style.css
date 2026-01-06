@@ -131,3 +131,103 @@ h1 {
         max-width: 90vw;
     }
 }
+
+/* Hint Button Styles */
+#hint-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-left: 10px;
+}
+
+#hint-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+#hint-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Button Group */
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Explanation Area */
+.explanation {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    text-align: left;
+    font-size: 0.95em;
+    color: #856404;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.explanation.hidden {
+    display: none;
+}
+
+.explanation h3 {
+    margin: 0 0 10px 0;
+    color: #856404;
+    font-size: 1.1em;
+}
+
+.explanation ul {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.explanation li {
+    margin: 3px 0;
+}
+
+/* Highlighted Move Styles */
+.square.hint-source {
+    background: #4ade80 !important; /* Green for source */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    animation: pulse 1s infinite;
+}
+
+.square.hint-destination {
+    background: #fbbf24 !important; /* Yellow for destination */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    animation: pulse 1s infinite;
+}
+
+.square.hint-capture {
+    background: #f87171 !important; /* Red for capture path */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Info message for hints */
+.hint-message {
+    color: #10b981;
+    font-weight: bold;
+    margin-top: 5px;
+}

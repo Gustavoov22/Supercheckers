@@ -296,6 +296,320 @@ function updateStatus(message) {
     statusDiv.textContent = message;
 }
 
+
+// HINT SYSTEM
+let hintActive = false;
+
+// Get hint button
+const hintBtn = document.getElementById('hint-btn');
+const explanationDiv = document.getElementById('explanation');
+
+// Event listener for hint button
+hintBtn.addEventListener('click', showHint);
+
+// Main hint function
+function showHint() {
+    if (!gameActive) {
+        updateStatus('Game is not active. Reset to play.');
+        return;
+    }
+
+    // Clear previous hints
+    clearHints();
+
+    // Find best move
+    const bestMove = findBestMove();
+
+    if (!bestMove) {
+        updateStatus('No valid moves available!');
+        explanationDiv.innerHTML = '<h3>⚠️ No Moves Available</h3><p>It appears you have no valid moves. Try resetting the game.</p>';
+        explanationDiv.classList.remove('hidden');
+        return;
+    }
+
+    // Highlight the move
+    highlightMove(bestMove);
+
+    // Show explanation
+    showExplanation(bestMove);
+
+    updateStatus('💡 Hint shown! Check the explanation below.');
+}
+
+// Find the best move for current player
+function findBestMove() {
+    const moves = [];
+
+    // Iterate through all pieces
+    for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            const piece = board[row][col];
+
+            if (piece && piece.startsWith(currentPlayer)) {
+                // Find all possible moves for this piece
+                const pieceMoves = getPossibleMoves(row, col, piece);
+                moves.push(...pieceMoves);
+            }
+        }
+    }
+
+    if (moves.length === 0) return null;
+
+    // Sort by priority (highest first)
+    moves.sort((a, b) => b.priority - a.priority);
+
+    return moves[0];
+}
+
+// Get all possible moves for a piece
+function getPossibleMoves(row, col, piece) {
+    const moves = [];
+    const isQueen = piece.includes('queen');
+    const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
+    for (const [dr, dc] of directions) {
+        if (isQueen) {
+            // Queens can move any distance
+            for (let dist = 1; dist < BOARD_SIZE; dist++) {
+                const toRow = row + dr * dist;
+                const toCol = col + dc * dist;
+
+                if (toRow < 0 || toRow >= BOARD_SIZE || toCol < 0 || toCol >= BOARD_SIZE) break;
+                if (board[toRow][toCol] !== null) {
+                    // Check if it's a capture
+                    if (!board[toRow][toCol].startsWith(currentPlayer)) {
+                        // Try multi-capture
+                        const captureMoves = getQueenCaptureMoves(row, col, dr, dc);
+                        moves.push(...captureMoves);
+                    }
+                    break; // Path blocked
+                }
+
+                // Valid move
+                const priority = getMovePriority(row, col, toRow, toCol, piece, false);
+                moves.push({
+                    fromRow: row,
+                    fromCol: col,
+                    toRow: toRow,
+                    toCol: toCol,
+                    captures: [],
+                    priority: priority,
+                    isQueen: isQueen
+                });
+            }
+        } else {
+            // Regular piece - single step
+            const toRow = row + dr;
+            const toCol = col + dc;
+
+            if (toRow < 0 || toRow >= BOARD_SIZE || toCol < 0 || toCol >= BOARD_SIZE) continue;
+
+            // Check direction
+            if (currentPlayer === 'red' && dr <= 0) continue;
+            if (currentPlayer === 'black' && dr >= 0) continue;
+
+            const target = board[toRow][toCol];
+
+            if (target === null) {
+                // Regular move
+                const priority = getMovePriority(row, col, toRow, toCol, piece, false);
+                moves.push({
+                    fromRow: row,
+                    fromCol: col,
+                    toRow: toRow,
+                    toCol: toCol,
+                    captures: [],
+                    priority: priority,
+                    isQueen: false
+                });
+            } else if (!target.startsWith(currentPlayer)) {
+                // Capture
+                const capRow = toRow + dr;
+                const capCol = toCol + dc;
+                if (capRow >= 0 && capRow < BOARD_SIZE && capCol >= 0 && capCol < BOARD_SIZE &&
+                    board[capRow][capCol] === null) {
+                    const priority = getMovePriority(row, col, capRow, capCol, piece, true);
+                    moves.push({
+                        fromRow: row,
+                        fromCol: col,
+                        toRow: capRow,
+                        toCol: capCol,
+                        captures: [{row: toRow, col: toCol}],
+                        priority: priority,
+                        isQueen: false
+                    });
+                }
+            }
+        }
+    }
+
+    return moves;
+}
+
+// Get queen capture moves (multi-capture)
+function getQueenCaptureMoves(startRow, startCol, dr, dc) {
+    const moves = [];
+    let captured = [];
+    let row = startRow;
+    let col = startCol;
+
+    for (let dist = 1; dist < BOARD_SIZE; dist++) {
+        row += dr;
+        col += dc;
+
+        if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) break;
+
+        const piece = board[row][col];
+
+        if (piece === null) {
+            if (captured.length > 0) {
+                // Landing spot after captures
+                const priority = 100 + captured.length * 50; // High priority for multi-capture
+                moves.push({
+                    fromRow: startRow,
+                    fromCol: startCol,
+                    toRow: row,
+                    toCol: col,
+                    captures: [...captured],
+                    priority: priority,
+                    isQueen: true
+                });
+            }
+        } else if (!piece.startsWith(currentPlayer)) {
+            // Can capture this piece
+            captured.push({row, col});
+        } else {
+            // Own piece blocks
+            break;
+        }
+    }
+
+    return moves;
+}
+
+// Calculate move priority
+function getMovePriority(fromRow, fromCol, toRow, toCol, piece, isCapture) {
+    let priority = 0;
+    const isQueen = piece.includes('queen');
+
+    // 1. Captures are highest priority
+    if (isCapture) {
+        priority += 100;
+        if (isQueen) priority += 50; // Queen captures are even better
+    }
+
+    // 2. Queen promotion
+    if (!isQueen) {
+        if (currentPlayer === 'red' && toRow === BOARD_SIZE - 1) {
+            priority += 80;
+        } else if (currentPlayer === 'black' && toRow === 0) {
+            priority += 80;
+        }
+    }
+
+    // 3. Move toward center (strategic)
+    const centerRow = BOARD_SIZE / 2;
+    const centerCol = BOARD_SIZE / 2;
+    const distToCenter = Math.abs(toRow - centerRow) + Math.abs(toCol - centerCol);
+    priority += (10 - distToCenter); // Closer to center = higher priority
+
+    // 4. Queen mobility
+    if (isQueen) {
+        priority += 10;
+    }
+
+    return priority;
+}
+
+// Highlight the move on board
+function highlightMove(move) {
+    // Find the squares
+    const squares = gameBoard.querySelectorAll('.square');
+
+    squares.forEach(square => {
+        const row = parseInt(square.dataset.row);
+        const col = parseInt(square.dataset.col);
+
+        if (row === move.fromRow && col === move.fromCol) {
+            square.classList.add('hint-source');
+        } else if (row === move.toRow && col === move.toCol) {
+            square.classList.add('hint-destination');
+        } else if (move.captures.some(c => c.row === row && c.col === col)) {
+            square.classList.add('hint-capture');
+        }
+    });
+
+    hintActive = true;
+}
+
+// Show explanation
+function showExplanation(move) {
+    let explanation = '<h3>💡 Best Move Analysis</h3>';
+
+    const piece = board[move.fromRow][move.fromCol];
+    const isQueen = piece.includes('queen');
+
+    explanation += '<ul>';
+
+    // Explain the move
+    explanation += `<li><strong>Move:</strong> (${move.fromRow},${move.fromCol}) → (${move.toRow},${move.toCol})</li>`;
+
+    // Explain captures
+    if (move.captures.length > 0) {
+        if (move.captures.length === 1) {
+            explanation += `<li><strong>Capture:</strong> Removes 1 opponent piece at (${move.captures[0].row},${move.captures[0].col})</li>`;
+        } else {
+            explanation += `<li><strong>Multi-Capture:</strong> Removes ${move.captures.length} opponent pieces!</li>`;
+        }
+        explanation += '<li><strong>Why:</strong> Captures reduce opponent options and gain material advantage.</li>';
+    }
+
+    // Explain promotion
+    if (!isQueen) {
+        if (currentPlayer === 'red' && move.toRow === BOARD_SIZE - 1) {
+            explanation += '<li><strong>Promotion:</strong> This move creates a QUEEN! 👑</li>';
+            explanation += '<li><strong>Why:</strong> Queens have unlimited movement and can capture multiple pieces.</li>';
+        } else if (currentPlayer === 'black' && move.toRow === 0) {
+            explanation += '<li><strong>Promotion:</strong> This move creates a QUEEN! 👑</li>';
+            explanation += '<li><strong>Why:</strong> Queens have unlimited movement and can capture multiple pieces.</li>';
+        }
+    }
+
+    // Explain queen move
+    if (isQueen) {
+        const distance = Math.abs(move.toRow - move.fromRow);
+        explanation += `<li><strong>Queen Move:</strong> Travels ${distance} squares diagonally</li>`;
+        explanation += '<li><strong>Why:</strong> Queens control long diagonals and create multiple threats.</li>';
+    }
+
+    // Strategic explanation
+    if (move.captures.length === 0 && !isQueen) {
+        explanation += '<li><strong>Strategy:</strong> Safe positioning move</li>';
+        explanation += '<li><strong>Why:</strong> Maintains piece safety while preparing for future captures.</li>';
+    }
+
+    explanation += '</ul>';
+
+    explanationDiv.innerHTML = explanation;
+    explanationDiv.classList.remove('hidden');
+}
+
+// Clear all hints
+function clearHints() {
+    const squares = gameBoard.querySelectorAll('.square');
+    squares.forEach(square => {
+        square.classList.remove('hint-source', 'hint-destination', 'hint-capture');
+    });
+    explanationDiv.classList.add('hidden');
+    hintActive = false;
+}
+
+// Override reset to clear hints
+const originalReset = initGame;
+initGame = function() {
+    originalReset();
+    clearHints();
+};
 // Event listeners
 resetBtn.addEventListener('click', () => {
     initGame();
