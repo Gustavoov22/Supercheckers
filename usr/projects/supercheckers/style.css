@@ -1,0 +1,233 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 800px;
+}
+
+h1 {
+    color: #333;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 25px;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+    background: #333;
+    padding: 2px;
+    border-radius: 10px;
+    margin: 20px auto;
+    max-width: 500px;
+    aspect-ratio: 1;
+}
+
+.square {
+    aspect-ratio: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.square.light {
+    background: #f0d9b5;
+}
+
+.square.dark {
+    background: #b58863;
+}
+
+.square:hover {
+    transform: scale(0.95);
+    filter: brightness(1.2);
+}
+
+.square.selected {
+    background: #ffd700 !important;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+}
+
+.square.red-piece {
+    background: radial-gradient(circle, #ff4444 30%, #cc0000 70%);
+}
+
+.square.black-piece {
+    background: radial-gradient(circle, #444 30%, #000 70%);
+}
+
+.controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+#reset-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+#status {
+    color: #555;
+    font-size: 0.95em;
+    padding: 10px 20px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: 15px;
+    }
+    h1 {
+        font-size: 1.8em;
+    }
+    .board {
+        max-width: 90vw;
+    }
+}
+
+/* Hint Button Styles */
+#hint-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-left: 10px;
+}
+
+#hint-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+#hint-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Button Group */
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Explanation Area */
+.explanation {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    text-align: left;
+    font-size: 0.95em;
+    color: #856404;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.explanation.hidden {
+    display: none;
+}
+
+.explanation h3 {
+    margin: 0 0 10px 0;
+    color: #856404;
+    font-size: 1.1em;
+}
+
+.explanation ul {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.explanation li {
+    margin: 3px 0;
+}
+
+/* Highlighted Move Styles */
+.square.hint-source {
+    background: #4ade80 !important; /* Green for source */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    animation: pulse 1s infinite;
+}
+
+.square.hint-destination {
+    background: #fbbf24 !important; /* Yellow for destination */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    animation: pulse 1s infinite;
+}
+
+.square.hint-capture {
+    background: #f87171 !important; /* Red for capture path */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Info message for hints */
+.hint-message {
+    color: #10b981;
+    font-weight: bold;
+    margin-top: 5px;
+}
