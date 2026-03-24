@@ -102,10 +102,11 @@ textarea:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: #3a3a3a;
+  border: 1px solid #555;
   border-radius: 34px;
   cursor: pointer;
-  transition: 0.4s;
+  transition: 0.3s ease;
 }
 
 .toggler:before {
@@ -114,18 +115,21 @@ textarea:focus {
   height: 26px;
   width: 26px;
   left: 4px;
-  bottom: 4px;
-  background-color: white;
+  bottom: 3px;
+  background-color: #aaa;
   border-radius: 50%;
-  transition: 0.4s;
+  transition: 0.3s ease;
 }
 
 input:checked + .toggler {
-  background-color: #2196f3;
+  background-color: rgba(66, 72, 241, 0.3);
+  border-color: rgba(66, 72, 241, 0.55);
 }
 
 input:checked + .toggler:before {
+  background-color: #6570f5;
   transform: translateX(26px);
+  box-shadow: 0 0 8px rgba(66, 72, 241, 0.5);
 }
 
 /* Select Styles */

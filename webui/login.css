@@ -1,5 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@300..700&display=swap");
+
 body {
-    background-color: #131313;
+    background-color: #0e0e0e;
+    background-image:
+        radial-gradient(ellipse at 20% 40%, rgba(66, 72, 241, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 60%, rgba(207, 102, 121, 0.08) 0%, transparent 55%);
     color: #d4d4d4;
     font-family: "Rubik", Arial, Helvetica, sans-serif;
     display: flex;
@@ -14,68 +19,117 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 .login-form {
-    background-color: #1a1a1a;
-    padding: 2rem;
-    border-radius: 1.125rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    background-color: rgba(26, 26, 26, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 2.5rem 2rem;
+    border-radius: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255,255,255,0.05) inset;
     width: 100%;
     max-width: 400px;
     text-align: center;
+    animation: loginFadeIn 0.4s ease;
+}
+
+@keyframes loginFadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .logo {
-    width: 80px;
-    height: 80px;
-    border-radius: 0.3125rem; /* Match the main page logo style */
-    margin-bottom: 1rem;
+    width: 72px;
+    height: 72px;
+    border-radius: 0.75rem;
+    margin-bottom: 1.25rem;
+    filter: drop-shadow(0 4px 16px rgba(66, 72, 241, 0.3));
 }
 
 h2 {
+    margin-top: 0;
     margin-bottom: 2rem;
+    font-weight: 400;
+    font-size: 1.4rem;
+    color: #e0e0e0;
+    letter-spacing: 0.01em;
 }
 
 .input-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     text-align: left;
 }
 
 .input-group label {
     display: block;
-    margin-bottom: 0.5rem;
-    color: #737a81;
+    margin-bottom: 0.4rem;
+    color: #8a9099;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
 }
 
 .input-group input {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #444444a8;
-    border-radius: 0.5rem;
-    background-color: #131313;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.6rem;
+    background-color: rgba(19, 19, 19, 0.8);
     color: #d4d4d4;
-    font-size: 1rem;
-    box-sizing: border-box; /* Added for consistent padding */
+    font-size: 0.95rem;
+    font-family: "Rubik", Arial, Helvetica, sans-serif;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.input-group input:focus {
+    border-color: rgba(66, 72, 241, 0.6);
+    background-color: rgba(10, 10, 10, 0.9);
+    box-shadow: 0 0 0 3px rgba(66, 72, 241, 0.15);
+}
+
+.input-group input::placeholder {
+    color: rgba(180, 180, 180, 0.3);
 }
 
 button {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.8rem;
     border: none;
-    border-radius: 0.5rem;
-    background-color: #4248f1;
+    border-radius: 0.6rem;
+    background: linear-gradient(135deg, #4248f1 0%, #3530c8 100%);
     color: white;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    font-family: "Rubik", Arial, Helvetica, sans-serif;
+    font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    letter-spacing: 0.02em;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 16px rgba(66, 72, 241, 0.3);
 }
 
 button:hover {
-    background-color: #353bc5;
+    background: linear-gradient(135deg, #4f56f7 0%, #3d38d5 100%);
+    box-shadow: 0 6px 20px rgba(66, 72, 241, 0.4);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(66, 72, 241, 0.3);
 }
 
 .error {
-    color: #cf6679;
+    color: #e07080;
     margin-top: 1rem;
+    font-size: 0.875rem;
+    padding: 0.6rem 0.75rem;
+    background: rgba(207, 102, 121, 0.1);
+    border-radius: 0.5rem;
+    border: 1px solid rgba(207, 102, 121, 0.2);
 }

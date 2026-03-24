@@ -7,60 +7,107 @@
 </head>
 
 <body>
-  <div class="config-section" x-data>
-    <button class="config-button" id="resetChat" @click="$store.chats.resetChat()">Reset Chat</button>
-    <button class="config-button" id="newChat" @click="$store.chats.newChat()">New Chat</button>
-    <button class="config-button" id="loadChats" @click="$store.chats.loadChats()">Load Chat</button>
-    <button class="config-button" id="loadChat" @click="$store.chats.saveChat()">Save Chat</button>
-    <button class="config-button" id="restart" @click="$store.chats.restart()">Restart</button>
-    <button class="config-button" id="settings" @click="settingsModalProxy.openModal()"><svg
-        xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="-5.0 -17.0 110.0 135.0" fill="currentColor" width="24"
-        height="24">
-        <path
-          d="m52.301 90.102h-4.1016c-3 0-5 0-6.8984-1.3984-1.8984-1.3984-2.5-3.3008-3.5-6.1016l-1.1016-3.6016c-0.19922-0.60156-0.69922-1.1992-1.3984-1.6016l-1.1016-0.60156c-0.60156-0.30078-1.5-0.39844-2.3008-0.19922l-4.3008 1.1992c-3.1016 0.89844-5.1016 1.5-7.3984 0.5-2.3008-0.89844-3.3984-2.8008-5-5.6016l-1.8008-3.1016c-1.5-2.5-2.5-4.3008-2.3008-6.6992 0.19922-2.3984 1.6016-3.8008 3.6016-6.1016l3.8008-4.1992c0.19922-0.19922 0.60156-1.3984 0.60156-2.6016 0-1.1016-0.5-2.3008-0.80078-2.6992l-3.6016-4c-2-2.1992-3.3008-3.6992-3.6016-6.1016-0.19922-2.3984 0.80078-4.1992 2.3008-6.6992l1.8008-3.1016c1.6016-2.8008 2.6992-4.6016 5-5.6016 2.3008-0.89844 4.3008-0.39844 7.3984 0.5l4.3984 1.1992c0.69922 0.10156 1.5 0 2.3008-0.30078l1.1016-0.60156c0.5-0.30078 1-0.89844 1.3008-1.6992l1.1992-3.5c0.89844-2.8008 1.6016-4.6992 3.5-6.1016 1.8984-1.3984 3.8984-1.3984 6.8984-1.3984h4.1016c3 0 5 0 6.8984 1.3984 1.8984 1.3984 2.5 3.1992 3.5 6.1016l1.1992 3.6016c0.19922 0.60156 0.69922 1.1992 1.3984 1.6016l1.1016 0.60156c0.60156 0.30078 1.5 0.39844 2.3008 0.19922l4.3008-1.1992c3.1016-0.89844 5.1016-1.5 7.3984-0.5 2.3008 0.89844 3.3984 2.8008 5 5.5l1.8008 3.1016c1.3984 2.5 2.5 4.3008 2.3008 6.6992-0.19922 2.3984-1.6016 3.8008-3.6016 6.1016l-3.9961 4.4062c-0.19922 0.19922-0.60156 1.3984-0.60156 2.6016 0 1.1016 0.5 2.3008 0.80078 2.6992l3.6016 4c2 2.1992 3.3008 3.6992 3.6016 6.1016 0.19922 2.3984-0.80078 4.1992-2.3008 6.6992l-1.8008 3.1016c-1.6016 2.8008-2.6992 4.6016-5 5.6016-2.3008 0.89844-4.3984 0.39844-7.3984-0.5l-4.3984-1.1992c-0.69922-0.10156-1.5 0-2.3008 0.30078l-1.1016 0.60156c-0.5 0.30078-1 0.89844-1.3008 1.6992l-1.1992 3.5c-0.89844 2.8008-1.6016 4.6992-3.5 6.1016-1.8008 1.293-3.8008 1.293-6.8008 1.293zm-6.6016-7.3008c0.5 0.10156 1.6016 0.10156 2.6016 0.10156h4.1016c1 0 2 0 2.6016-0.10156 0.19922-0.5 0.60156-1.5 0.89844-2.3984l1.1992-3.6016c0.89844-2.3008 2.3984-4.1992 4.3984-5.3984l1.3984-0.80078c2.3984-1.3008 5.1016-1.6016 7.6016-1l4.6016 1.3008c1 0.30078 2.1016 0.60156 2.6992 0.69922 0.30078-0.5 0.89844-1.5 1.3984-2.3984l1.8008-3.1016c0.5-0.80078 1-1.8008 1.1992-2.3008-0.30078-0.39844-1-1.1992-1.6992-2l-3.8008-4.1992c-1.6016-2-2.5-4.8008-2.5-7.3984 0-2.6016 0.89844-5.3984 2.3008-7.3008l3.8984-4.3984c0.69922-0.69922 1.3984-1.5 1.6992-2-0.19922-0.5-0.80078-1.3984-1.1992-2.3008l-1.8984-3.1016c-0.5-0.89844-1.1016-1.8984-1.3984-2.3984-0.60156 0.10156-1.6992 0.39844-2.6992 0.69922l-4.3984 1.3008c-2.6992 0.60156-5.3008 0.30078-7.6016-0.89844l-1.4023-0.80469c-2.1016-1.3984-3.6016-3.1992-4.3984-5.3984l-1.3008-3.8008c-0.30078-0.89844-0.60156-1.8984-0.89844-2.3984-0.5-0.10156-1.6016-0.10156-2.6016-0.10156h-4.1016c-1 0-2 0-2.6016 0.10156-0.19922 0.5-0.60156 1.5-0.89844 2.3984l-1.1992 3.6016c-0.89844 2.3008-2.3984 4.1992-4.3984 5.3984l-1.3984 0.80078c-2.3984 1.3008-5.1016 1.6016-7.6016 1l-4.6016-1.3008c-1-0.30078-2.1016-0.60156-2.6992-0.69922-0.30078 0.5-0.89844 1.5-1.3984 2.3984l-1.8008 3.1016c-0.5 0.80078-1 1.8008-1.1992 2.3008 0.30078 0.39844 1 1.1992 1.6992 2l3.8008 4.1992c1.6016 2 2.5 4.8008 2.5 7.3984 0 2.6016-0.89844 5.3984-2.3008 7.3008l-3.8984 4.3984c-0.69922 0.69922-1.3984 1.5-1.6992 2 0.19922 0.5 0.80078 1.3984 1.1992 2.3008l1.8008 3.1016c0.5 0.89844 1.1016 1.8984 1.3984 2.3984 0.60156-0.10156 1.6992-0.39844 2.6992-0.69922l4.3984-1.1992c2.6992-0.60156 5.3008-0.30078 7.6016 0.89844l1.3984 0.80078c2.1016 1.3008 3.6016 3.1992 4.3984 5.3984l1.3008 3.8008c0.5 0.80078 0.80078 1.8008 1 2.3008z">
-        </path>
-        <path
-          d="m50.301 66.5c-9 0-16.398-7.3008-16.398-16.398 0-9.1016 7.3008-16.398 16.398-16.398 9.1016 0 16.398 7.3008 16.398 16.398 0 9.0977-7.3984 16.398-16.398 16.398zm0-25.5c-5 0-9.1016 4.1016-9.1016 9.1016s4.1016 9.1016 9.1016 9.1016 9.1016-4.1016 9.1016-9.1016c-0.003906-5-4.1016-9.1016-9.1016-9.1016z">
-        </path>
-      </svg>Settings</button>
-    <button class="config-button" id="memory-dash"
-      @click="openModal('settings/memory/memory-dashboard.html');">Memory</button>
-    <button class="config-button" id="dashboard" @click="deselectChat()">Dashboard</button>
-
+  <div class="quick-actions-grid" x-data>
+    <button class="config-button" id="newChat" @click="$store.chats.newChat()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
+        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+      </svg>
+      New Chat
+    </button>
+    <button class="config-button" id="resetChat" @click="$store.chats.resetChat()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
+      </svg>
+      Reset
+    </button>
+    <button class="config-button" id="loadChats" @click="$store.chats.loadChats()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Load
+    </button>
+    <button class="config-button" id="loadChat" @click="$store.chats.saveChat()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+      </svg>
+      Save
+    </button>
+    <button class="config-button" id="settings" @click="settingsModalProxy.openModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Settings
+    </button>
+    <button class="config-button" id="memory-dash" @click="openModal('settings/memory/memory-dashboard.html');">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+      </svg>
+      Memory
+    </button>
+    <button class="config-button btn-full" id="dashboard" @click="deselectChat()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Dashboard
+    </button>
+    <button class="config-button btn-full" id="restart" @click="$store.chats.restart()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>
+      </svg>
+      Restart
+    </button>
   </div>
 </body>
 <style>
+  .quick-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
+  }
+
   .config-button {
     background-color: var(--color-background);
     border: 0.1rem solid var(--color-border);
     border-radius: var(--spacing-xs);
     cursor: pointer;
-    display: inline;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.4rem;
     font-family: "Rubik", Arial, Helvetica, sans-serif;
     font-size: var(--font-size-small);
+    color: var(--color-text);
     opacity: 0.8;
-    text-wrap: nowrap;
-    width: calc(50% - var(--spacing-xs));
-    float: left;
-    margin: 0 var(--spacing-xs) var(--spacing-xs) 0;
-    padding: var(--spacing-sm) 0.75rem;
-    max-height: 2.3rem;
-    -webkit-transition: all var(--transition-speed), transform 0.1s ease-in-out;
-    transition: all var(--transition-speed), transform 0.1s ease-in-out;
+    padding: 0.5rem 0.65rem;
+    -webkit-transition: all 0.15s ease, transform 0.1s ease;
+    transition: all 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .config-button.btn-full {
+    grid-column: span 2;
+    justify-content: flex-start;
+  }
+
+  .btn-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    opacity: 0.7;
   }
 
   .config-button:hover {
     background-color: var(--color-secondary);
     opacity: 1;
+    transform: translateY(-1px);
+    border-color: rgba(255,255,255,0.12);
   }
 
   .config-button:active {
-    opacity: 0.5;
-  }
-
-  #settings {
-    display: flex;
-    align-items: center;
+    opacity: 0.6;
+    transform: translateY(0);
   }
 
   .light-mode .config-button {
@@ -70,6 +117,7 @@
 
   .light-mode .config-button:hover {
     background-color: #d6dae8;
+    border-color: rgba(0,0,0,0.12);
   }
 
   .light-mode .config-button:active {
