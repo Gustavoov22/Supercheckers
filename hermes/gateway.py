@@ -5,22 +5,24 @@ Exposes:
   GET  /v1/models  → list of available models (Bearer auth)
   POST /v1/chat/completions → run task on this instance (Bearer auth)
 
-If ANTHROPIC_API_KEY is set, requests are routed through Claude.
-Otherwise, the content is treated as a direct bash command and executed.
+Priority order for AI backend:
+  1. GOOGLE_API_KEY / GEMINI_API_KEY → Gemma 4 via Google AI Studio
+  2. ANTHROPIC_API_KEY               → Claude via Anthropic API
+  3. (none)                          → bash execution fallback
 """
 
 import asyncio
 import os
-import subprocess
 import time
 import uuid
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 API_KEY = os.environ.get("API_SERVER_KEY", "")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+GEMMA_MODEL = os.environ.get("GEMMA_MODEL", "gemma-4-27b-it")
 MODEL_ID = "hermes-agent"
 
 app = FastAPI(title="Hermes Gateway")
@@ -48,7 +50,8 @@ class ChatRequest(BaseModel):
 
 @app.get("/v1/health")
 async def health():
-    return {"status": "ok"}
+    backend = "gemma4" if GOOGLE_API_KEY else ("claude" if ANTHROPIC_API_KEY else "bash")
+    return {"status": "ok", "backend": backend}
 
 
 @app.get("/v1/models")
@@ -74,7 +77,9 @@ async def chat_completions(request: Request, body: ChatRequest):
     if not prompt:
         raise HTTPException(status_code=400, detail="No user message found")
 
-    if ANTHROPIC_API_KEY:
+    if GOOGLE_API_KEY:
+        result = await _run_via_gemma(prompt, body.messages)
+    elif ANTHROPIC_API_KEY:
         result = await _run_via_claude(prompt, body.messages)
     else:
         result = await _run_bash(prompt)
@@ -93,6 +98,44 @@ async def chat_completions(request: Request, body: ChatRequest):
         ],
         "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
     }
+
+
+async def _run_via_gemma(prompt: str, messages: list[ChatMessage]) -> str:
+    """Forward the request to Gemma 4 via Google AI Studio API."""
+    import httpx
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMMA_MODEL}:generateContent"
+    contents = []
+    for msg in messages:
+        if msg.role in ("user", "assistant"):
+            role = "user" if msg.role == "user" else "model"
+            contents.append({"role": role, "parts": [{"text": msg.content}]})
+
+    payload = {
+        "contents": contents,
+        "generationConfig": {"maxOutputTokens": 4096, "temperature": 0.7},
+        "systemInstruction": {
+            "parts": [{"text": (
+                "You are Hermes, an AI assistant with full access to a Linux Ubuntu instance. "
+                "Help the user with tasks, commands, and anything they need on this system."
+            )}]
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.post(
+                url,
+                json=payload,
+                params={"key": GOOGLE_API_KEY},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+    except httpx.HTTPStatusError as exc:
+        return f"Gemma API error {exc.response.status_code}: {exc.response.text[:200]}"
+    except Exception as exc:
+        return f"Gemma API error: {exc}"
 
 
 async def _run_bash(command: str) -> str:
@@ -124,8 +167,7 @@ async def _run_via_claude(prompt: str, messages: list[ChatMessage]) -> str:
         client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
         system = (
             "You are Hermes, an AI assistant with full access to a Linux Ubuntu instance. "
-            "When given a task, reason through it and respond helpfully. "
-            "If the user asks you to run a command, include the command and its expected output."
+            "When given a task, reason through it and respond helpfully."
         )
         api_messages = [
             {"role": m.role, "content": m.content}
