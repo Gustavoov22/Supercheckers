@@ -7,8 +7,9 @@ Exposes:
 
 Backend priority:
   1. Ollama (localhost:11434) — local Qwen model via `ollama pull qwen2.5:3b`
-  2. ANTHROPIC_API_KEY        — Claude via Anthropic API (fallback)
-  3. (none)                   — bash execution fallback
+  2. GOOGLE_API_KEY           — Gemini via Google AI Studio API (free tier)
+  3. ANTHROPIC_API_KEY        — Claude via Anthropic API
+  4. (none)                   — bash execution fallback
 """
 
 import asyncio
@@ -22,6 +23,8 @@ from pydantic import BaseModel
 
 API_KEY = os.environ.get("API_SERVER_KEY", "")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:3b")
 MODEL_ID = "hermes-agent"
@@ -66,6 +69,8 @@ class ChatRequest(BaseModel):
 async def health():
     if await _ollama_available():
         backend = f"ollama:{OLLAMA_MODEL}"
+    elif GOOGLE_API_KEY:
+        backend = f"gemini:{GEMINI_MODEL}"
     elif ANTHROPIC_API_KEY:
         backend = "claude"
     else:
@@ -98,6 +103,8 @@ async def chat_completions(request: Request, body: ChatRequest):
 
     if await _ollama_available():
         result = await _run_via_ollama(body.messages)
+    elif GOOGLE_API_KEY:
+        result = await _run_via_gemini(prompt, body.messages)
     elif ANTHROPIC_API_KEY:
         result = await _run_via_claude(prompt, body.messages)
     else:
@@ -120,7 +127,7 @@ async def chat_completions(request: Request, body: ChatRequest):
 
 
 async def _run_via_ollama(messages: list[ChatMessage]) -> str:
-    """Forward the request to a local Ollama model (Qwen2.5)."""
+    """Forward the request to a local Ollama model."""
     api_messages = [
         {"role": m.role, "content": m.content}
         for m in messages
@@ -138,6 +145,39 @@ async def _run_via_ollama(messages: list[ChatMessage]) -> str:
             return r.json()["message"]["content"]
     except Exception as exc:
         return f"Ollama error: {exc}"
+
+
+async def _run_via_gemini(prompt: str, messages: list[ChatMessage]) -> str:
+    """Forward the request to Google Gemini via generativelanguage.googleapis.com."""
+    try:
+        contents = []
+        for m in messages:
+            if m.role == "user":
+                contents.append({"role": "user", "parts": [{"text": m.content}]})
+            elif m.role == "assistant":
+                contents.append({"role": "model", "parts": [{"text": m.content}]})
+
+        payload = {
+            "contents": contents,
+            "systemInstruction": {
+                "parts": [{"text": (
+                    "You are Hermes, an AI assistant with full access to a Linux Ubuntu instance. "
+                    "Help the user with tasks, commands, and anything they need on this system."
+                )}]
+            },
+            "generationConfig": {"maxOutputTokens": 4096},
+        }
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{GEMINI_MODEL}:generateContent?key={GOOGLE_API_KEY}"
+        )
+        async with httpx.AsyncClient(timeout=120) as client:
+            r = await client.post(url, json=payload)
+            r.raise_for_status()
+            data = r.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as exc:
+        return f"Gemini error: {exc}"
 
 
 async def _run_bash(command: str) -> str:
