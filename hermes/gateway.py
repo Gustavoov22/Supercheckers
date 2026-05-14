@@ -5,10 +5,10 @@ Exposes:
   GET  /v1/models  → list of available models (Bearer auth)
   POST /v1/chat/completions → run task on this instance (Bearer auth)
 
-Priority order for AI backend:
-  1. GOOGLE_API_KEY / GEMINI_API_KEY → Gemma 4 via Google AI Studio
-  2. ANTHROPIC_API_KEY               → Claude via Anthropic API
-  3. (none)                          → bash execution fallback
+Backend priority:
+  1. Ollama (localhost:11434) — local Qwen model via `ollama pull qwen2.5:3b`
+  2. ANTHROPIC_API_KEY        — Claude via Anthropic API (fallback)
+  3. (none)                   — bash execution fallback
 """
 
 import asyncio
@@ -16,13 +16,14 @@ import os
 import time
 import uuid
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
 API_KEY = os.environ.get("API_SERVER_KEY", "")
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-GEMMA_MODEL = os.environ.get("GEMMA_MODEL", "gemma-4-27b-it")
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:3b")
 MODEL_ID = "hermes-agent"
 
 app = FastAPI(title="Hermes Gateway")
@@ -35,6 +36,19 @@ def _check_auth(request: Request) -> None:
     token = auth.removeprefix("Bearer ").strip()
     if token != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
+
+
+async def _ollama_available() -> bool:
+    """Return True if Ollama is running and the model is available."""
+    try:
+        async with httpx.AsyncClient(timeout=3) as client:
+            r = await client.get(f"{OLLAMA_HOST}/api/tags")
+            if r.status_code != 200:
+                return False
+            models = [m["name"] for m in r.json().get("models", [])]
+            return any(OLLAMA_MODEL in m for m in models)
+    except Exception:
+        return False
 
 
 class ChatMessage(BaseModel):
@@ -50,7 +64,12 @@ class ChatRequest(BaseModel):
 
 @app.get("/v1/health")
 async def health():
-    backend = "gemma4" if GOOGLE_API_KEY else ("claude" if ANTHROPIC_API_KEY else "bash")
+    if await _ollama_available():
+        backend = f"ollama:{OLLAMA_MODEL}"
+    elif ANTHROPIC_API_KEY:
+        backend = "claude"
+    else:
+        backend = "bash"
     return {"status": "ok", "backend": backend}
 
 
@@ -77,8 +96,8 @@ async def chat_completions(request: Request, body: ChatRequest):
     if not prompt:
         raise HTTPException(status_code=400, detail="No user message found")
 
-    if GOOGLE_API_KEY:
-        result = await _run_via_gemma(prompt, body.messages)
+    if await _ollama_available():
+        result = await _run_via_ollama(body.messages)
     elif ANTHROPIC_API_KEY:
         result = await _run_via_claude(prompt, body.messages)
     else:
@@ -100,42 +119,25 @@ async def chat_completions(request: Request, body: ChatRequest):
     }
 
 
-async def _run_via_gemma(prompt: str, messages: list[ChatMessage]) -> str:
-    """Forward the request to Gemma 4 via Google AI Studio API."""
-    import httpx
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMMA_MODEL}:generateContent"
-    contents = []
-    for msg in messages:
-        if msg.role in ("user", "assistant"):
-            role = "user" if msg.role == "user" else "model"
-            contents.append({"role": role, "parts": [{"text": msg.content}]})
-
+async def _run_via_ollama(messages: list[ChatMessage]) -> str:
+    """Forward the request to a local Ollama model (Qwen2.5)."""
+    api_messages = [
+        {"role": m.role, "content": m.content}
+        for m in messages
+        if m.role in ("user", "assistant", "system")
+    ]
     payload = {
-        "contents": contents,
-        "generationConfig": {"maxOutputTokens": 4096, "temperature": 0.7},
-        "systemInstruction": {
-            "parts": [{"text": (
-                "You are Hermes, an AI assistant with full access to a Linux Ubuntu instance. "
-                "Help the user with tasks, commands, and anything they need on this system."
-            )}]
-        },
+        "model": OLLAMA_MODEL,
+        "messages": api_messages,
+        "stream": False,
     }
-
     try:
         async with httpx.AsyncClient(timeout=120) as client:
-            resp = await client.post(
-                url,
-                json=payload,
-                params={"key": GOOGLE_API_KEY},
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
-    except httpx.HTTPStatusError as exc:
-        return f"Gemma API error {exc.response.status_code}: {exc.response.text[:200]}"
+            r = await client.post(f"{OLLAMA_HOST}/api/chat", json=payload)
+            r.raise_for_status()
+            return r.json()["message"]["content"]
     except Exception as exc:
-        return f"Gemma API error: {exc}"
+        return f"Ollama error: {exc}"
 
 
 async def _run_bash(command: str) -> str:
@@ -165,10 +167,6 @@ async def _run_via_claude(prompt: str, messages: list[ChatMessage]) -> str:
         import anthropic
 
         client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-        system = (
-            "You are Hermes, an AI assistant with full access to a Linux Ubuntu instance. "
-            "When given a task, reason through it and respond helpfully."
-        )
         api_messages = [
             {"role": m.role, "content": m.content}
             for m in messages
@@ -177,7 +175,10 @@ async def _run_via_claude(prompt: str, messages: list[ChatMessage]) -> str:
         response = await client.messages.create(
             model="claude-opus-4-7",
             max_tokens=4096,
-            system=system,
+            system=(
+                "You are Hermes, an AI assistant with full access to a Linux Ubuntu instance. "
+                "Help the user with tasks, commands, and anything they need on this system."
+            ),
             messages=api_messages,
         )
         return response.content[0].text
