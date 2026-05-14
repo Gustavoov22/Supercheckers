@@ -1,0 +1,151 @@
+"""Hermes-compatible OpenAI-format gateway for this Ubuntu instance.
+
+Exposes:
+  GET  /v1/health  → 200 OK
+  GET  /v1/models  → list of available models (Bearer auth)
+  POST /v1/chat/completions → run task on this instance (Bearer auth)
+
+If ANTHROPIC_API_KEY is set, requests are routed through Claude.
+Otherwise, the content is treated as a direct bash command and executed.
+"""
+
+import asyncio
+import os
+import subprocess
+import time
+import uuid
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+API_KEY = os.environ.get("API_SERVER_KEY", "")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+MODEL_ID = "hermes-agent"
+
+app = FastAPI(title="Hermes Gateway")
+
+
+def _check_auth(request: Request) -> None:
+    if not API_KEY:
+        return
+    auth = request.headers.get("Authorization", "")
+    token = auth.removeprefix("Bearer ").strip()
+    if token != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    model: str = MODEL_ID
+    messages: list[ChatMessage]
+    stream: bool = False
+
+
+@app.get("/v1/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.get("/v1/models")
+async def models(request: Request):
+    _check_auth(request)
+    return {
+        "object": "list",
+        "data": [
+            {"id": MODEL_ID, "object": "model", "created": int(time.time()), "owned_by": "hermes"}
+        ],
+    }
+
+
+@app.post("/v1/chat/completions")
+async def chat_completions(request: Request, body: ChatRequest):
+    _check_auth(request)
+
+    prompt = ""
+    for msg in body.messages:
+        if msg.role == "user":
+            prompt = msg.content
+
+    if not prompt:
+        raise HTTPException(status_code=400, detail="No user message found")
+
+    if ANTHROPIC_API_KEY:
+        result = await _run_via_claude(prompt, body.messages)
+    else:
+        result = await _run_bash(prompt)
+
+    return {
+        "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
+        "object": "chat.completion",
+        "created": int(time.time()),
+        "model": MODEL_ID,
+        "choices": [
+            {
+                "index": 0,
+                "message": {"role": "assistant", "content": result},
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+    }
+
+
+async def _run_bash(command: str) -> str:
+    """Execute a bash command and return its output."""
+    try:
+        proc = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+            cwd="/home/user",
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
+        output = stdout.decode("utf-8", errors="replace").strip()
+        rc = proc.returncode
+        if rc != 0:
+            return f"Exit code {rc}:\n{output}"
+        return output or "(command completed with no output)"
+    except asyncio.TimeoutError:
+        return "Command timed out after 120 seconds"
+    except Exception as exc:
+        return f"Error running command: {exc}"
+
+
+async def _run_via_claude(prompt: str, messages: list[ChatMessage]) -> str:
+    """Forward the request to Claude via the Anthropic API."""
+    try:
+        import anthropic
+
+        client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
+        system = (
+            "You are Hermes, an AI assistant with full access to a Linux Ubuntu instance. "
+            "When given a task, reason through it and respond helpfully. "
+            "If the user asks you to run a command, include the command and its expected output."
+        )
+        api_messages = [
+            {"role": m.role, "content": m.content}
+            for m in messages
+            if m.role in ("user", "assistant")
+        ]
+        response = await client.messages.create(
+            model="claude-opus-4-7",
+            max_tokens=4096,
+            system=system,
+            messages=api_messages,
+        )
+        return response.content[0].text
+    except Exception as exc:
+        return f"Claude API error: {exc}"
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("GATEWAY_PORT", "8642"))
+    host = os.environ.get("GATEWAY_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port, log_level="info")
