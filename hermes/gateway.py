@@ -4,6 +4,7 @@ Exposes:
   GET  /v1/health  → 200 OK
   GET  /v1/models  → list of available models (Bearer auth)
   POST /v1/chat/completions → run task on this instance (Bearer auth)
+  POST /v1/browse  → run a browser-use agent task (Bearer auth)
 
 Backend priority:
   1. MINIMAX_API_KEY   — MiniMax M1 via api.minimaxi.chat
@@ -102,6 +103,10 @@ async def chat_completions(request: Request, body: ChatRequest):
 
     if MINIMAX_API_KEY:
         result = await _run_via_minimax(body.messages)
+        if result.startswith("MiniMax error:") and GOOGLE_API_KEY:
+            result = await _run_via_gemini(prompt, body.messages)
+        elif result.startswith("MiniMax error:") and ANTHROPIC_API_KEY:
+            result = await _run_via_claude(prompt, body.messages)
     elif GOOGLE_API_KEY:
         result = await _run_via_gemini(prompt, body.messages)
     elif ANTHROPIC_API_KEY:
@@ -232,6 +237,72 @@ async def _run_via_claude(prompt: str, messages: list[ChatMessage]) -> str:
         return response.content[0].text
     except Exception as exc:
         return f"Claude API error: {exc}"
+
+
+CHROMIUM_PATH = os.environ.get(
+    "CHROMIUM_PATH",
+    "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+)
+GATEWAY_PORT = int(os.environ.get("GATEWAY_PORT", "8642"))
+GATEWAY_API_KEY = os.environ.get("API_SERVER_KEY", "")
+
+
+class BrowseRequest(BaseModel):
+    task: str
+    max_steps: int = 20
+
+
+@app.post("/v1/browse")
+async def browse(request: Request, body: BrowseRequest):
+    _check_auth(request)
+    result = await asyncio.get_event_loop().run_in_executor(
+        None, _run_browser_task, body.task, body.max_steps
+    )
+    return {"task": body.task, "result": result}
+
+
+def _run_browser_task(task: str, max_steps: int) -> str:
+    """Run a browser-use agent task synchronously in a thread."""
+    try:
+        import asyncio as _asyncio
+        from browser_use import Agent
+        from browser_use.llm.openai.chat import ChatOpenAI as BUChatOpenAI
+        from browser_use.browser import BrowserProfile
+
+        llm = BUChatOpenAI(
+            model=MODEL_ID,
+            base_url=f"http://127.0.0.1:{GATEWAY_PORT}/v1",
+            api_key=GATEWAY_API_KEY or "no-key",
+        )
+
+        profile = BrowserProfile(
+            executable_path=CHROMIUM_PATH,
+            headless=True,
+            user_data_dir="/tmp/hermes-browser-profile",
+            chromium_sandbox=False,
+            disable_security=True,
+            enable_default_extensions=False,
+        )
+
+        async def _run():
+            agent = Agent(
+                task=task,
+                llm=llm,
+                browser_profile=profile,
+                max_steps=max_steps,
+                use_vision=False,
+            )
+            result = await agent.run()
+            return str(result)
+
+        loop = _asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_run())
+        finally:
+            loop.close()
+
+    except Exception as exc:
+        return f"Browser-use error: {exc}"
 
 
 if __name__ == "__main__":
