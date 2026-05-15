@@ -6,27 +6,39 @@ Exposes:
   POST /v1/chat/completions → run task on this instance (Bearer auth)
 
 Backend priority:
-  1. Ollama (localhost:11434) — local Qwen model via `ollama pull qwen2.5:3b`
-  2. GOOGLE_API_KEY           — Gemini via Google AI Studio API (free tier)
-  3. ANTHROPIC_API_KEY        — Claude via Anthropic API
-  4. (none)                   — bash execution fallback
+  1. MINIMAX_API_KEY   — MiniMax M1 via api.minimaxi.chat
+  2. GOOGLE_API_KEY    — Gemini via generativelanguage.googleapis.com (free tier)
+  3. ANTHROPIC_API_KEY — Claude via Anthropic API
+  4. (none)            — bash execution fallback
 """
 
 import asyncio
 import os
 import time
 import uuid
+from pathlib import Path
+
+# Load ~/.hermes/.env before reading any env vars
+_env_file = Path.home() / ".hermes" / ".env"
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        _line = _line.strip()
+        if not _line or _line.startswith("#") or "=" not in _line:
+            continue
+        _k, _, _v = _line.partition("=")
+        os.environ.setdefault(_k.strip(), _v.strip())
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
 API_KEY = os.environ.get("API_SERVER_KEY", "")
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+MINIMAX_API_KEY = os.environ.get("MINIMAX_API_KEY", "")
+MINIMAX_MODEL = os.environ.get("MINIMAX_MODEL", "MiniMax-Text-01")
+MINIMAX_BASE_URL = os.environ.get("MINIMAX_BASE_URL", "https://api.minimaxi.chat/v1")
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
-OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:3b")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 MODEL_ID = "hermes-agent"
 
 app = FastAPI(title="Hermes Gateway")
@@ -39,19 +51,6 @@ def _check_auth(request: Request) -> None:
     token = auth.removeprefix("Bearer ").strip()
     if token != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
-
-
-async def _ollama_available() -> bool:
-    """Return True if Ollama is running and the model is available."""
-    try:
-        async with httpx.AsyncClient(timeout=3) as client:
-            r = await client.get(f"{OLLAMA_HOST}/api/tags")
-            if r.status_code != 200:
-                return False
-            models = [m["name"] for m in r.json().get("models", [])]
-            return any(OLLAMA_MODEL in m for m in models)
-    except Exception:
-        return False
 
 
 class ChatMessage(BaseModel):
@@ -67,8 +66,8 @@ class ChatRequest(BaseModel):
 
 @app.get("/v1/health")
 async def health():
-    if await _ollama_available():
-        backend = f"ollama:{OLLAMA_MODEL}"
+    if MINIMAX_API_KEY:
+        backend = f"minimax:{MINIMAX_MODEL}"
     elif GOOGLE_API_KEY:
         backend = f"gemini:{GEMINI_MODEL}"
     elif ANTHROPIC_API_KEY:
@@ -101,8 +100,8 @@ async def chat_completions(request: Request, body: ChatRequest):
     if not prompt:
         raise HTTPException(status_code=400, detail="No user message found")
 
-    if await _ollama_available():
-        result = await _run_via_ollama(body.messages)
+    if MINIMAX_API_KEY:
+        result = await _run_via_minimax(body.messages)
     elif GOOGLE_API_KEY:
         result = await _run_via_gemini(prompt, body.messages)
     elif ANTHROPIC_API_KEY:
@@ -126,29 +125,38 @@ async def chat_completions(request: Request, body: ChatRequest):
     }
 
 
-async def _run_via_ollama(messages: list[ChatMessage]) -> str:
-    """Forward the request to a local Ollama model."""
+async def _run_via_minimax(messages: list[ChatMessage]) -> str:
+    """Forward the request to MiniMax API (OpenAI-compatible format)."""
     api_messages = [
         {"role": m.role, "content": m.content}
         for m in messages
         if m.role in ("user", "assistant", "system")
     ]
     payload = {
-        "model": OLLAMA_MODEL,
+        "model": MINIMAX_MODEL,
         "messages": api_messages,
         "stream": False,
+        "max_tokens": 4096,
+    }
+    headers = {
+        "Authorization": f"Bearer {MINIMAX_API_KEY}",
+        "Content-Type": "application/json",
     }
     try:
         async with httpx.AsyncClient(timeout=120) as client:
-            r = await client.post(f"{OLLAMA_HOST}/api/chat", json=payload)
+            r = await client.post(
+                f"{MINIMAX_BASE_URL}/chat/completions",
+                json=payload,
+                headers=headers,
+            )
             r.raise_for_status()
-            return r.json()["message"]["content"]
+            return r.json()["choices"][0]["message"]["content"]
     except Exception as exc:
-        return f"Ollama error: {exc}"
+        return f"MiniMax error: {exc}"
 
 
 async def _run_via_gemini(prompt: str, messages: list[ChatMessage]) -> str:
-    """Forward the request to Google Gemini via generativelanguage.googleapis.com."""
+    """Forward the request to Google Gemini (generativelanguage.googleapis.com)."""
     try:
         contents = []
         for m in messages:
