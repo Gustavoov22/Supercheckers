@@ -15,6 +15,7 @@ Backend priority:
 
 import asyncio
 import os
+import re
 import time
 import uuid
 from pathlib import Path
@@ -130,6 +131,11 @@ async def chat_completions(request: Request, body: ChatRequest):
     }
 
 
+def _strip_think_blocks(text: str) -> str:
+    """Remove <think>...</think> reasoning prefixes from MiniMax M2.7 responses."""
+    return re.sub(r"<think>.*?</think>\s*", "", text, flags=re.DOTALL).strip()
+
+
 async def _run_via_minimax(messages: list[ChatMessage]) -> str:
     """Forward the request to MiniMax API (OpenAI-compatible format)."""
     api_messages = [
@@ -155,7 +161,8 @@ async def _run_via_minimax(messages: list[ChatMessage]) -> str:
                 headers=headers,
             )
             r.raise_for_status()
-            return r.json()["choices"][0]["message"]["content"]
+            content = r.json()["choices"][0]["message"]["content"]
+            return _strip_think_blocks(content)
     except Exception as exc:
         return f"MiniMax error: {exc}"
 
