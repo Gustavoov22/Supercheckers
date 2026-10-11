@@ -1,0 +1,545 @@
+<style>
+#sc-root{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--hatch-widget-text);width:100%;max-width:540px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px;align-items:center}
+#sc-root *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.sc-title{font-size:22px;font-weight:700;margin:2px 0 0;letter-spacing:-.02em}
+.sc-sub{font-size:12px;color:var(--hatch-widget-muted);margin:0}
+.sc-area{display:grid;grid-template-columns:22px 1fr;grid-template-rows:1fr 22px;gap:4px;width:min(94vw,440px)}
+.sc-ranks{display:flex;flex-direction:column;justify-content:space-around;font-size:10px;font-weight:600;color:var(--hatch-widget-muted);text-align:center}
+.sc-files{display:flex;justify-content:space-around;font-size:10px;font-weight:600;color:var(--hatch-widget-muted);grid-column:2;text-align:center}
+.sc-board{display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);aspect-ratio:1/1;border-radius:12px;overflow:hidden;border:1px solid var(--hatch-widget-border);box-shadow:var(--hatch-widget-shadow);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.sc-sq{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;min-width:0;min-height:0}
+.sc-sq.l{background:#f0e6d3}
+.sc-sq.d{background:#bd9260}
+.sc-pc{width:74%;height:74%;border-radius:50%;position:relative;box-shadow:0 2px 5px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
+.sc-pc.r{background:radial-gradient(circle at 35% 30%,#ff8a80,#e5322b 72%)}
+.sc-pc.b{background:radial-gradient(circle at 35% 30%,#636366,#141416 72%)}
+.sc-pc.q{outline:3px solid #ffd60a;outline-offset:-3px}
+.sc-pc.q svg{width:58%;height:58%;color:#ffd60a;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+.sc-sq.sel{background:#ffd60a !important}
+.sc-sq.hsrc{background:#30d158 !important}
+.sc-sq.hdst{background:#ffd60a !important}
+.sc-sq.hcap{background:#ff453a !important}
+.sc-dot{position:absolute;width:24%;height:24%;border-radius:50%;background:rgba(20,20,20,.32);pointer-events:none}
+.sc-controls{width:100%;display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.sc-row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+.sc-btn{border:1px solid var(--hatch-widget-border);background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;min-height:42px;font-family:inherit}
+.sc-btn:active{transform:scale(.97)}
+.sc-btn.primary{background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);border-color:transparent}
+.sc-btn.on{background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);border-color:transparent}
+.sc-status{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:10px;padding:10px 14px;font-size:14px;font-weight:500;text-align:center;min-height:42px;display:flex;align-items:center;justify-content:center;width:100%}
+.sc-card{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:12px;padding:10px 14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center;width:100%}
+.sc-toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;cursor:pointer}
+.sc-toggle input{width:18px;height:18px;accent-color:var(--hatch-widget-accent);cursor:pointer}
+.sc-sel{background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;cursor:pointer}
+.sc-explain{background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:12px;padding:10px 14px;font-size:13px;width:100%}
+.sc-explain h4{margin:0 0 4px;font-size:13px}
+.sc-explain p{margin:0;color:var(--hatch-widget-muted)}
+.sc-hidden{display:none !important}
+.sc-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.sc-modal-card{background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);border-radius:16px;padding:20px;width:min(92vw,400px);max-height:80vh;overflow:auto;position:relative;box-shadow:var(--hatch-widget-shadow)}
+.sc-modal-card h3{margin:0 0 12px;font-size:18px}
+.sc-x{position:absolute;top:12px;right:12px;min-height:0;padding:6px 12px;font-size:16px;line-height:1}
+.sc-tabs{display:flex;gap:6px;margin-bottom:12px}
+.sc-tab{flex:1;min-height:38px;font-size:13px}
+.sc-rec{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:13px}
+.sc-muted{color:var(--hatch-widget-muted);font-size:13px}
+.sc-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);font-size:12px;font-weight:700;margin-right:6px}
+</style>
+<div id="sc-root">
+  <h1 class="sc-title">Supercheckers</h1>
+  <p class="sc-sub">10x10 checkers &middot; queens &middot; optional AI opponent</p>
+  <div class="sc-area">
+    <div class="sc-ranks" id="sc-ranks"></div>
+    <div class="sc-board" id="sc-board" role="grid" aria-label="Checkers board"></div>
+    <div></div>
+    <div class="sc-files" id="sc-files"></div>
+  </div>
+  <div class="sc-controls">
+    <div class="sc-row">
+      <label class="sc-toggle"><input type="checkbox" id="sc-teaching"> Teaching mode</label>
+    </div>
+    <div class="sc-row">
+      <button class="sc-btn" id="sc-undo">Undo</button>
+      <button class="sc-btn primary" id="sc-reset">Reset</button>
+      <button class="sc-btn" id="sc-stats">Leaderboard</button>
+    </div>
+    <div class="sc-status" id="sc-status">Loading…</div>
+    <div class="sc-card">
+      <label class="sc-toggle"><input type="checkbox" id="sc-ai"> Play vs AI</label>
+      <select class="sc-sel sc-hidden" id="sc-depth" aria-label="AI difficulty">
+        <option value="1">Easy</option>
+        <option value="3" selected>Medium</option>
+        <option value="5">Hard</option>
+      </select>
+      <label class="sc-toggle"><input type="checkbox" id="sc-force" checked> Force capture</label>
+    </div>
+    <div class="sc-explain sc-hidden" id="sc-explain"></div>
+  </div>
+  <div class="sc-modal sc-hidden" id="sc-modal" role="dialog" aria-label="Leaderboard">
+    <div class="sc-modal-card">
+      <button class="sc-btn sc-x" id="sc-close" aria-label="Close">&times;</button>
+      <h3>Leaderboard</h3>
+      <div class="sc-tabs">
+        <button class="sc-btn sc-tab on" data-tab="games">Recent games</button>
+        <button class="sc-btn sc-tab" data-tab="rank">Top players</button>
+      </div>
+      <div id="sc-games"></div>
+      <div id="sc-rank" class="sc-hidden"></div>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+/*ENGINE-START*/
+var SC_N = 10;
+var SC_DIRS = [[-1,-1],[-1,1],[1,-1],[1,1]];
+function scInB(r,c){ return r>=0 && r<SC_N && c>=0 && c<SC_N; }
+function scOwner(p){ return p.charAt(0); }            /* 'r' | 'b' */
+function scIsQueen(p){ return p.length===2; }          /* 'rq','bq' vs 'r','b' */
+function scNewBoard(){
+  var b=[], r, c;
+  for(r=0;r<SC_N;r++){ b.push([]); for(c=0;c<SC_N;c++) b[r].push(null); }
+  for(r=0;r<4;r++) for(c=0;c<SC_N;c++) if(((r+c)%2)===1) b[r][c]='r';
+  for(r=6;r<SC_N;r++) for(c=0;c<SC_N;c++) if(((r+c)%2)===1) b[r][c]='b';
+  return b;
+}
+function scClone(b){ return b.map(function(row){ return row.slice(); }); }
+/* All capture sequences for the piece at (r,c). Each move: {from,to,path,caps}. */
+function scCapturesFor(b,r,c){
+  var p=b[r][c]; if(!p) return [];
+  var q=scIsQueen(p), me=scOwner(p), out=[], seen={};
+  function dfs(bd,br,bc,path,caps){
+    var extended=false;
+    function leg(lr,lc,mr,mc){
+      var nb=scClone(bd);
+      nb[mr][mc]=null; nb[br][bc]=null; nb[lr][lc]=p;
+      extended=true;
+      dfs(nb,lr,lc,path.concat([[lr,lc]]),caps.concat([[mr,mc]]));
+    }
+    var d,dr,dc,mr,mc,lr,lc,mid;
+    if(!q){
+      for(d=0;d<4;d++){
+        dr=SC_DIRS[d][0]; dc=SC_DIRS[d][1];
+        mr=br+dr; mc=bc+dc; lr=br+2*dr; lc=bc+2*dc;
+        if(!scInB(lr,lc)) continue;
+        mid=bd[mr][mc];
+        if(mid && scOwner(mid)!==me && !bd[lr][lc]) leg(lr,lc,mr,mc);
+      }
+    }else{
+      for(d=0;d<4;d++){
+        dr=SC_DIRS[d][0]; dc=SC_DIRS[d][1];
+        mr=br+dr; mc=bc+dc;
+        while(scInB(mr,mc) && !bd[mr][mc]){ mr+=dr; mc+=dc; }
+        if(!scInB(mr,mc)) continue;
+        mid=bd[mr][mc];
+        if(!mid || scOwner(mid)===me) continue;
+        lr=mr+dr; lc=mc+dc;
+        while(scInB(lr,lc) && !bd[lr][lc]){ leg(lr,lc,mr,mc); lr+=dr; lc+=dc; }
+      }
+    }
+    if(!extended && caps.length){
+      var last=path[path.length-1];
+      var key=last[0]+','+last[1]+'|'+caps.map(function(x){return x[0]+','+x[1];}).sort().join(';');
+      if(!seen[key]){
+        seen[key]=1;
+        out.push({from:[r,c],to:[last[0],last[1]],path:path.map(function(x){return [x[0],x[1]];}),caps:caps.map(function(x){return [x[0],x[1]];})});
+      }
+    }
+  }
+  dfs(scClone(b),r,c,[],[]);
+  return out;
+}
+function scQuietMoves(b,r,c){
+  var p=b[r][c]; if(!p) return [];
+  var q=scIsQueen(p), me=scOwner(p), out=[], d, dr, dc, lr, lc;
+  if(!q){
+    var fwd = me==='r' ? 1 : -1;
+    for(d=0;d<4;d++){
+      dr=SC_DIRS[d][0]; dc=SC_DIRS[d][1];
+      if(dr!==fwd) continue;
+      lr=r+dr; lc=c+dc;
+      if(scInB(lr,lc) && !b[lr][lc]) out.push({from:[r,c],to:[lr,lc],path:[[lr,lc]],caps:[]});
+    }
+  }else{
+    for(d=0;d<4;d++){
+      dr=SC_DIRS[d][0]; dc=SC_DIRS[d][1];
+      lr=r+dr; lc=c+dc;
+      while(scInB(lr,lc) && !b[lr][lc]){ out.push({from:[r,c],to:[lr,lc],path:[[lr,lc]],caps:[]}); lr+=dr; lc+=dc; }
+    }
+  }
+  return out;
+}
+function scAllMoves(b,turn,forceCapture){
+  var caps=[], r, c, p;
+  for(r=0;r<SC_N;r++) for(c=0;c<SC_N;c++){
+    p=b[r][c];
+    if(p && scOwner(p)===turn) caps.push.apply(caps, scCapturesFor(b,r,c));
+  }
+  if(caps.length && forceCapture) return caps;
+  var quiet=[];
+  if(!caps.length || !forceCapture){
+    for(r=0;r<SC_N;r++) for(c=0;c<SC_N;c++){
+      p=b[r][c];
+      if(p && scOwner(p)===turn) quiet.push.apply(quiet, scQuietMoves(b,r,c));
+    }
+  }
+  return caps.concat(quiet);
+}
+function scApplyMove(b,move){
+  var nb=scClone(b), i;
+  var fr=move.from[0], fc=move.from[1];
+  var p=nb[fr][fc];
+  nb[fr][fc]=null;
+  for(i=0;i<move.caps.length;i++) nb[move.caps[i][0]][move.caps[i][1]]=null;
+  var tr=move.to[0], tc=move.to[1], np=p;
+  if(!scIsQueen(p)){
+    if(scOwner(p)==='r' && tr===SC_N-1) np='rq';
+    else if(scOwner(p)==='b' && tr===0) np='bq';
+  }
+  nb[tr][tc]=np;
+  return {board:nb, promoted:np!==p};
+}
+function scEvaluate(b){
+  var s=0, r, c, p, me, q, v;
+  for(r=0;r<SC_N;r++) for(c=0;c<SC_N;c++){
+    p=b[r][c]; if(!p) continue;
+    me=scOwner(p); q=scIsQueen(p);
+    v = q?300:100;
+    if(!q) v += (me==='r' ? r : (SC_N-1-r))*4;
+    v += (4.5-Math.abs(c-4.5))*(q?4:2);
+    s += me==='r' ? v : -v;
+  }
+  return s;
+}
+var scNodes=0, scDeadline=0;
+function scMinimax(b,turn,depth,alpha,beta,forceCapture){
+  scNodes++;
+  if((scNodes&1023)===0 && Date.now()>scDeadline) return scEvaluate(b);
+  if(scNodes>140000) return scEvaluate(b);
+  var moves=scAllMoves(b,turn,forceCapture), i, m, nb, v, best;
+  if(!moves.length) return turn==='r' ? -100000-depth : 100000+depth;
+  if(depth===0) return scEvaluate(b);
+  moves.sort(function(a,b2){ return b2.caps.length-a.caps.length; });
+  if(turn==='r'){
+    best=-Infinity;
+    for(i=0;i<moves.length;i++){
+      m=moves[i]; nb=scApplyMove(b,m).board;
+      v=scMinimax(nb,'b',depth-1,alpha,beta,forceCapture);
+      if(v>best) best=v;
+      if(best>alpha) alpha=best;
+      if(beta<=alpha) break;
+    }
+    return best;
+  }
+  best=Infinity;
+  for(i=0;i<moves.length;i++){
+    m=moves[i]; nb=scApplyMove(b,m).board;
+    v=scMinimax(nb,'r',depth-1,alpha,beta,forceCapture);
+    if(v<best) best=v;
+    if(best<beta) beta=best;
+    if(beta<=alpha) break;
+  }
+  return best;
+}
+function scBestAIMove(b,depth,forceCapture){
+  var moves=scAllMoves(b,'r',forceCapture), i, m, nb, v, best, bestMs;
+  if(!moves.length) return null;
+  moves.sort(function(a,b2){ return (b2.caps.length-a.caps.length) || (Math.random()-0.5); });
+  scNodes=0; scDeadline=Date.now()+1200;
+  best=-Infinity; bestMs=[moves[0]];
+  for(i=0;i<moves.length;i++){
+    m=moves[i]; nb=scApplyMove(b,m).board;
+    v=scMinimax(nb,'b',depth-1,-Infinity,Infinity,forceCapture)+m.caps.length*0.01;
+    if(v>best+1e-9){ best=v; bestMs=[m]; }
+    else if(Math.abs(v-best)<1e-9){ bestMs.push(m); }
+  }
+  return bestMs[(Math.random()*bestMs.length)|0];
+}
+/* Cheap heuristic best move for teaching mode. */
+function scHeuristicMove(b,turn,forceCapture){
+  var moves=scAllMoves(b,turn,forceCapture), i, m, s, best=null, bs=-1e18;
+  if(!moves.length) return null;
+  for(i=0;i<moves.length;i++){
+    m=moves[i];
+    var applied=scApplyMove(b,m);
+    s = m.caps.length*100 + (applied.promoted?80:0);
+    s += (4.5-Math.abs(m.to[1]-4.5))*3;
+    if(scIsQueen(b[m.from[0]][m.from[1]])) s+=10;
+    if(s>bs){ bs=s; best=m; }
+  }
+  return best;
+}
+/*ENGINE-END*/
+/* ================= UI ================= */
+var SCW = (typeof window!=='undefined' && window.hatchWidget) ? window.hatchWidget : null;
+var scEphemeral = { sel:null, moves:[], hint:null, aiTok:0 };
+var S = null;
+function scDefaults(){
+  return {
+    board: scNewBoard(), turn:'r', gameActive:true, moveCount:0, history:[],
+    aiToken:0,
+    settings:{ ai:false, depth:3, force:true, teaching:false },
+    stats:{ games:[], wins:{} },
+    status:'Red to move. Tap one of your pieces.', explanation:'', aiThinking:false
+  };
+}
+function scLoadState(){
+  var d=scDefaults();
+  if(SCW){ S=SCW.getState(d)||d; } else { S=d; }
+  S.settings=Object.assign({ai:false,depth:3,force:true,teaching:false}, S.settings||{});
+  S.stats=S.stats||{games:[],wins:{}};
+  S.history=S.history||[];
+  if(typeof S.aiToken!=='number') S.aiToken=0;
+}
+function scSave(){
+  if(SCW){ try{ SCW.setState(S); }catch(e){} }
+  scRender();
+}
+if(SCW && typeof window!=='undefined'){
+  window.addEventListener('hatch-widget-state', function(ev){
+    if(ev && ev.detail && ev.detail.state){
+      S=ev.detail.state;
+      scEphemeral.sel=null; scEphemeral.moves=[]; scEphemeral.hint=null;
+      scRender();
+    }
+  });
+}
+var boardEl=null, sqEls=[];
+function scBuildBoard(){
+  boardEl=document.getElementById('sc-board');
+  boardEl.innerHTML=''; sqEls=[];
+  var r,c,d;
+  for(r=0;r<SC_N;r++) for(c=0;c<SC_N;c++){
+    d=document.createElement('div');
+    d.className='sc-sq '+(((r+c)%2===1)?'d':'l');
+    d.setAttribute('data-r',r); d.setAttribute('data-c',c);
+    boardEl.appendChild(d); sqEls.push(d);
+  }
+}
+var CROWN_SVG='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.5 6.5 6 10l6-7 6 7 3.5-3.5L20 18.5H4L2.5 6.5z"/></svg>';
+function scRender(){
+  if(!sqEls.length) return;
+  var hint=scEphemeral.hint, sel=scEphemeral.sel, r, c, el, p, q, key, cls, inner;
+  var destKeys={}, capKeys={};
+  for(r=0;r<scEphemeral.moves.length;r++){
+    var m=scEphemeral.moves[r];
+    destKeys[m.to[0]+','+m.to[1]]=1;
+  }
+  for(r=0;r<10;r++) for(c=0;c<10;c++){
+    el=sqEls[r*10+c]; p=S.board[r][c]; key=r+','+c;
+    cls='sc-sq '+(((r+c)%2===1)?'d':'l');
+    if(sel && sel.r===r && sel.c===c) cls+=' sel';
+    else if(hint && hint.from[0]===r && hint.from[1]===c) cls+=' hsrc';
+    else if(hint && hint.to[0]===r && hint.to[1]===c) cls+=' hdst';
+    else if(hint){
+      var hc=hint.caps, i, isCap=false;
+      for(i=0;i<hc.length;i++) if(hc[i][0]===r&&hc[i][1]===c){isCap=true;break;}
+      if(isCap) cls+=' hcap';
+    }
+    el.className=cls;
+    inner='';
+    if(p){
+      q=scIsQueen(p);
+      inner='<div class="sc-pc '+(scOwner(p)==='r'?'r':'b')+(q?' q':'')+'">'+(q?CROWN_SVG:'')+'</div>';
+    }else if(destKeys[key]){
+      inner='<div class="sc-dot"></div>';
+    }
+    el.innerHTML=inner;
+  }
+  document.getElementById('sc-status').textContent=S.status;
+  var ex=document.getElementById('sc-explain');
+  if(S.explanation){ ex.innerHTML=S.explanation; ex.classList.remove('sc-hidden'); }
+  else { ex.classList.add('sc-hidden'); }
+  var aiBox=document.getElementById('sc-ai');
+  if(aiBox.checked!==!!S.settings.ai) aiBox.checked=!!S.settings.ai;
+  var dep=document.getElementById('sc-depth');
+  dep.classList.toggle('sc-hidden',!S.settings.ai);
+  if(dep.value!==String(S.settings.depth)) dep.value=String(S.settings.depth);
+  var fBox=document.getElementById('sc-force');
+  if(fBox.checked!==!!S.settings.force) fBox.checked=!!S.settings.force;
+  var tBox=document.getElementById('sc-teaching');
+  if(tBox.checked!==!!S.settings.teaching) tBox.checked=!!S.settings.teaching;
+}
+var SC_FILES='ABCDEFGHIJ';
+function scSqName(r,c){ return SC_FILES[c]+(r+1); }
+function scDescribe(m){
+  return scSqName(m.from[0],m.from[1])+' to '+scSqName(m.to[0],m.to[1])+(m.caps.length?' — takes '+m.caps.length:'');
+}
+function scExplainHtml(m){
+  var p=S.board[m.from[0]][m.from[1]], t, b;
+  if(m.caps.length){
+    t='Capture the pieces';
+    b='This move takes '+m.caps.length+' opponent piece'+(m.caps.length>1?'s':'')+'. Removing enemy pieces is the surest path to winning — take captures whenever they appear.';
+  }else{
+    var promoted=scApplyMove(S.board,m).promoted;
+    if(promoted){ t='Crown a queen'; b='This move promotes your piece to a queen. Queens glide any distance diagonally and capture in every direction.'; }
+    else if(m.to[1]>=3 && m.to[1]<=6){ t='Control the center'; b='Central squares give a piece the most options. A good developing move.'; }
+    else { t='Solid developing move'; b='Advances your position while keeping your structure safe.'; }
+  }
+  return '<h4>'+t+'</h4><p>'+b+'</p>';
+}
+function scRecord(w){
+  S.stats.games.unshift({w:w,moves:S.moveCount,at:Date.now(),ai:!!S.settings.ai});
+  if(S.stats.games.length>40) S.stats.games.length=40;
+  S.stats.wins[w]=(S.stats.wins[w]||0)+1;
+}
+function scDoMove(m){
+  S.history.push({b:JSON.stringify(S.board),t:S.turn,n:S.moveCount});
+  if(S.history.length>400) S.history.shift();
+  var res=scApplyMove(S.board,m);
+  S.board=res.board; S.moveCount++;
+  scEphemeral.sel=null; scEphemeral.moves=[]; scEphemeral.hint=null;
+  S.turn = S.turn==='r' ? 'b' : 'r';
+  var replies=scAllMoves(S.board,S.turn,S.settings.force);
+  if(!replies.length){
+    S.gameActive=false;
+    var w = S.turn==='r' ? 'Black' : 'Red';
+    scRecord(w);
+    S.status=(res.promoted?'Queen crowned. ':'')+w+' wins the game.';
+    S.explanation='';
+  }else{
+    S.status=(res.promoted?'Queen crowned. ':'')+(S.turn==='r'?'Red':'Black')+' to move.';
+  }
+  scSave();
+  if(S.gameActive){
+    if(S.settings.teaching) scHint();
+    if(S.settings.ai && S.turn==='r') scAI();
+  }
+}
+function scHint(){
+  if(!S.gameActive) return;
+  var m=scHeuristicMove(S.board,S.turn,S.settings.force);
+  if(!m){ S.explanation=''; scSave(); return; }
+  scEphemeral.hint=m;
+  S.explanation=scExplainHtml(m);
+  S.status='Hint: '+scDescribe(m);
+  scSave();
+}
+function scAI(){
+  if(!S.gameActive || !S.settings.ai || S.turn!=='r' || S.aiThinking) return;
+  var tok=++scEphemeral.aiTok;
+  S.aiThinking=true; S.status='AI is thinking…'; scSave();
+  setTimeout(function(){
+    if(tok!==scEphemeral.aiTok) return;
+    S.aiThinking=false;
+    if(!S.gameActive || S.turn!=='r'){ scSave(); return; }
+    var mv=scBestAIMove(S.board,S.settings.depth,S.settings.force);
+    if(mv) scDoMove(mv);
+    else { S.gameActive=false; scRecord('Black'); S.status='Black wins the game.'; S.explanation=''; scSave(); }
+  },450);
+}
+function scUndo(){
+  scEphemeral.aiTok++;
+  var h=S.history.pop();
+  if(!h){ S.status='Nothing to undo yet.'; scSave(); return; }
+  S.board=JSON.parse(h.b); S.turn=h.t; S.moveCount=h.n;
+  S.gameActive=true; S.aiThinking=false;
+  scEphemeral.sel=null; scEphemeral.moves=[]; scEphemeral.hint=null;
+  S.status='Move undone. '+(S.turn==='r'?'Red':'Black')+' to move.';
+  scSave();
+  if(S.settings.teaching) scHint();
+}
+function scReset(){
+  scEphemeral.aiTok++;
+  var keep={settings:S.settings,stats:S.stats};
+  S=scDefaults(); S.settings=keep.settings; S.stats=keep.stats;
+  scEphemeral.sel=null; scEphemeral.moves=[]; scEphemeral.hint=null;
+  scSave();
+  if(S.settings.teaching) scHint();
+  if(S.settings.ai && S.turn==='r' && S.gameActive) scAI();
+}
+function scClick(e){
+  var sq=e.target.closest ? e.target.closest('.sc-sq') : null;
+  if(!sq) return;
+  if(!S.gameActive){ S.status='Game over. Press Reset to play again.'; scSave(); return; }
+  if(S.aiThinking) return;
+  if(S.settings.ai && S.turn==='r') return;
+  var r=parseInt(sq.getAttribute('data-r'),10), c=parseInt(sq.getAttribute('data-c'),10);
+  var sel=scEphemeral.sel, i, mv=null;
+  if(sel){
+    if(sel.r===r && sel.c===c){ scEphemeral.sel=null; scEphemeral.moves=[]; scRender(); return; }
+    for(i=0;i<scEphemeral.moves.length;i++){
+      if(scEphemeral.moves[i].to[0]===r && scEphemeral.moves[i].to[1]===c){ mv=scEphemeral.moves[i]; break; }
+    }
+    if(mv){ scDoMove(mv); return; }
+  }
+  var p=S.board[r][c];
+  if(p && scOwner(p)===S.turn){
+    var all=scAllMoves(S.board,S.turn,S.settings.force), mine=[];
+    for(i=0;i<all.length;i++) if(all[i].from[0]===r && all[i].from[1]===c) mine.push(all[i]);
+    if(mine.length){ scEphemeral.sel={r:r,c:c}; scEphemeral.moves=mine; scEphemeral.hint=null; scRender(); return; }
+  }
+  if(sel){ scEphemeral.sel=null; scEphemeral.moves=[]; scRender(); }
+}
+function scOpenStats(){
+  var g=S.stats.games, i, html;
+  if(g.length){
+    html='';
+    for(i=0;i<Math.min(10,g.length);i++){
+      var x=g[i], d=new Date(x.at);
+      html+='<div class="sc-rec"><span><b>'+x.w+'</b> won'+(x.ai?' (vs AI)':'')+'</span><span class="sc-muted">'+x.moves+' moves · '+(d.getMonth()+1)+'/'+d.getDate()+'</span></div>';
+    }
+  }else html='<p class="sc-muted">No finished games yet.</p>';
+  document.getElementById('sc-games').innerHTML=html;
+  var wins=S.stats.wins||{}, keys=Object.keys(wins).sort(function(a,b){return wins[b]-wins[a];});
+  if(keys.length){
+    html='';
+    for(i=0;i<keys.length;i++) html+='<div class="sc-rec"><span><span class="sc-badge">'+(i+1)+'</span>'+keys[i]+'</span><span>'+wins[keys[i]]+' win'+(wins[keys[i]]===1?'':'s')+'</span></div>';
+  }else html='<p class="sc-muted">No wins recorded yet.</p>';
+  document.getElementById('sc-rank').innerHTML=html;
+  document.getElementById('sc-modal').classList.remove('sc-hidden');
+}
+function scInitCoords(){
+  var rk=document.getElementById('sc-ranks'), fl=document.getElementById('sc-files'), i, d;
+  rk.innerHTML=''; fl.innerHTML='';
+  for(i=1;i<=SC_N;i++){ d=document.createElement('div'); d.textContent=i; rk.appendChild(d); }
+  for(i=0;i<SC_N;i++){ d=document.createElement('div'); d.textContent=SC_FILES[i]; fl.appendChild(d); }
+}
+function scInit(){
+  scLoadState();
+  scBuildBoard();
+  scInitCoords();
+  boardEl.addEventListener('click', scClick);
+  document.getElementById('sc-undo').addEventListener('click', scUndo);
+  document.getElementById('sc-reset').addEventListener('click', scReset);
+  document.getElementById('sc-stats').addEventListener('click', scOpenStats);
+  document.getElementById('sc-close').addEventListener('click', function(){ document.getElementById('sc-modal').classList.add('sc-hidden'); });
+  document.getElementById('sc-modal').addEventListener('click', function(e){ if(e.target.id==='sc-modal') e.target.classList.add('sc-hidden'); });
+  var tabs=document.querySelectorAll('.sc-tab'), i;
+  for(i=0;i<tabs.length;i++){
+    (function(btn){
+      btn.addEventListener('click', function(){
+        var all=document.querySelectorAll('.sc-tab'), j;
+        for(j=0;j<all.length;j++) all[j].classList.remove('on');
+        btn.classList.add('on');
+        var t=btn.getAttribute('data-tab');
+        document.getElementById('sc-games').classList.toggle('sc-hidden', t!=='games');
+        document.getElementById('sc-rank').classList.toggle('sc-hidden', t!=='rank');
+      });
+    })(tabs[i]);
+  }
+  document.getElementById('sc-ai').addEventListener('change', function(e){
+    scEphemeral.aiTok++;
+    S.settings.ai=e.target.checked;
+    scEphemeral.sel=null; scEphemeral.moves=[]; scEphemeral.hint=null;
+    scSave();
+    if(S.settings.ai) scAI();
+  });
+  document.getElementById('sc-depth').addEventListener('change', function(e){
+    S.settings.depth=parseInt(e.target.value,10); scSave();
+  });
+  document.getElementById('sc-force').addEventListener('change', function(e){
+    S.settings.force=e.target.checked;
+    scEphemeral.sel=null; scEphemeral.moves=[]; scSave();
+  });
+  document.getElementById('sc-teaching').addEventListener('change', function(e){
+    S.settings.teaching=e.target.checked;
+    if(S.settings.teaching){ scHint(); }
+    else { S.explanation=''; scEphemeral.hint=null; scSave(); }
+  });
+  scRender();
+  if(S.settings.teaching) scHint();
+  if(S.settings.ai && S.turn==='r' && S.gameActive && !S.aiThinking) scAI();
+}
+scInit();
+</script>
