@@ -71,6 +71,7 @@ html,body{background:#000;margin:0}
 .sc-rec{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:12px;padding:11px 13px;margin-bottom:6px;font-size:13px}
 .sc-muted{color:var(--hatch-widget-muted);font-size:13px}
 .sc-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);font-size:12px;font-weight:700;margin-right:6px}
+.sc-3dbtn{text-decoration:none;color:var(--hatch-widget-accent);border-color:var(--hatch-widget-accent);font-weight:800}
 </style>
 <div id="sc-root">
   <div class="sc-brand">
@@ -84,6 +85,7 @@ html,body{background:#000;margin:0}
       <span class="sc-chip" id="sc-moves">Move 0</span>
       <span class="sc-chip" title="Red pieces captured"><span class="sc-minidot r"></span><span id="sc-cap-r">0</span></span>
       <span class="sc-chip" title="Black pieces captured"><span class="sc-minidot b"></span><span id="sc-cap-b">0</span></span>
+      <a class="sc-chip sc-3dbtn" href="3d.html" title="Open the 3D board">3D</a>
     </div>
   </div>
   <div class="sc-area">
