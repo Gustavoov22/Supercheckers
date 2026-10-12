@@ -71,7 +71,7 @@
         <option value="3" selected>Medium</option>
         <option value="5">Hard</option>
       </select>
-      <label class="sc-toggle"><input type="checkbox" id="sc-force" checked> Force capture</label>
+      <label class="sc-toggle"><input type="checkbox" id="sc-force" checked> Force capture · most pieces</label>
     </div>
     <div class="sc-explain sc-hidden" id="sc-explain"></div>
   </div>
@@ -179,7 +179,14 @@ function scAllMoves(b,turn,forceCapture){
     p=b[r][c];
     if(p && scOwner(p)===turn) caps.push.apply(caps, scCapturesFor(b,r,c));
   }
-  if(caps.length && forceCapture) return caps;
+  if(caps.length && forceCapture){
+    /* FMJD 4.13: when several captures exist, only the one(s) taking the
+       most pieces may be played. */
+    var maxc=0, i;
+    for(i=0;i<caps.length;i++) if(caps[i].caps.length>maxc) maxc=caps[i].caps.length;
+    caps=caps.filter(function(m){ return m.caps.length===maxc; });
+    return caps;
+  }
   var quiet=[];
   if(!caps.length || !forceCapture){
     for(r=0;r<SC_N;r++) for(c=0;c<SC_N;c++){
