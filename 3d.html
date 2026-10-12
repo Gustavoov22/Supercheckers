@@ -42,10 +42,21 @@ html,body{background:#000;margin:0}
 /* ---- side drawer ---- */
 .sc-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:55;opacity:0;pointer-events:none;transition:opacity .25s}
 .sc-backdrop.open{opacity:1;pointer-events:auto}
-.sc-drawer{position:fixed;top:0;left:0;bottom:0;width:min(84vw,320px);background:#101013;border-right:1px solid var(--hatch-widget-border);z-index:60;transform:translateX(-105%);transition:transform .28s ease;padding:16px 14px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.sc-drawer{--hatch-widget-bg:#000;--hatch-widget-text:#f4f1e8;--hatch-widget-muted:#a09a8a;--hatch-widget-border:#2b2b2e;--hatch-widget-surface:#141416;--hatch-widget-surface-muted:#1e1e21;--hatch-widget-accent:#e8b64c;--hatch-widget-on-accent:#1a1206;--hatch-widget-focus:#e8b64c;--hatch-widget-shadow:0 10px 30px rgba(0,0,0,.6);position:fixed;top:0;left:0;bottom:0;width:min(84vw,320px);background:#141416;color:#f4f1e8;border-right:1px solid #2b2b2e;z-index:60;transform:translateX(-105%);transition:transform .28s ease;padding:16px 14px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
 .sc-drawer.open{transform:none}
 .sc-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 6px}
-.sc-drawer-head strong{font-size:16px;letter-spacing:.06em}
+.sc-drawer-head strong{font-size:16px;letter-spacing:.06em;color:#f4f1e8}
+.sc-drawer .sc-card{background:#141416;border:1px solid #2b2b2e}
+.sc-drawer .sc-card-label{color:#a09a8a}
+.sc-drawer .sc-card-row + .sc-card-row{border-top-color:#2b2b2e}
+.sc-drawer .sc-switch{color:#f4f1e8}
+.sc-drawer .sc-switch .tk{background:#2c2c2e;border-color:#2b2b2e}
+.sc-drawer .sc-switch input:checked + .tk{background:#e8b64c;border-color:transparent}
+.sc-drawer .sc-seg{background:#000;border:1px solid #2b2b2e}
+.sc-drawer .sc-seg-btn{color:#a09a8a}
+.sc-drawer .sc-seg-btn.on{background:#e8b64c;color:#1a1206}
+.sc-drawer .sc-btn{background:#1e1e21;border:1px solid #2b2b2e;color:#f4f1e8}
+.sc-drawer .sc-btn.gold{background:linear-gradient(145deg,#f5c542,#d99a26);border:0;color:#1a1206}
 .sc-x2{min-height:0;padding:8px 14px;font-size:18px;line-height:1}
 .sc-card{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:18px;padding:12px 16px;width:100%}
 .sc-card-label{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--hatch-widget-muted);text-transform:uppercase;margin-bottom:6px}
@@ -99,7 +110,6 @@ html,body{background:#000;margin:0}
   <div id="sc3d-view" aria-label="3D checkers board. Drag to rotate, tap a piece to move."></div>
   <div class="sc-status" id="sc-status">Loading&hellip;</div>
   <div class="sc-explain sc-hidden" id="sc-explain"></div>
-</div>
 <div class="sc-backdrop" id="sc3d-backdrop"></div>
 <aside class="sc-drawer" id="sc3d-drawer" aria-label="Settings menu">
   <div class="sc-drawer-head"><strong>MENU</strong><button class="sc-btn sc-x2" id="sc3d-close" aria-label="Close menu">&times;</button></div>
@@ -146,6 +156,7 @@ html,body{background:#000;margin:0}
     <div id="sc-games"></div>
     <div id="sc-rank" class="sc-hidden"></div>
   </div>
+</div>
 </div>
 <script type="importmap">
 {"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/"}}
@@ -496,9 +507,38 @@ function woodTexture(base,dark,light){
   tx.colorSpace=THREE.SRGBColorSpace;
   return tx;
 }
+/* warm honey-oak cafe tabletop: long grain streaks + knots */
+function cafeWoodTexture(){
+  var cv=document.createElement('canvas'); cv.width=cv.height=512;
+  var g=cv.getContext('2d');
+  g.fillStyle='#9a6a3e'; g.fillRect(0,0,512,512);
+  var i,y;
+  for(i=0;i<120;i++){
+    y=Math.random()*512;
+    g.strokeStyle=Math.random()<0.55?'#6e4526':'#c99a63';
+    g.globalAlpha=0.10+Math.random()*0.16;
+    g.lineWidth=1+Math.random()*3.5;
+    g.beginPath();
+    g.moveTo(-10,y);
+    g.bezierCurveTo(140,y+(Math.random()*24-12),340,y+(Math.random()*24-12),522,y+(Math.random()*18-9));
+    g.stroke();
+  }
+  var k,kx,ky,kr,r2;
+  for(k=0;k<7;k++){
+    kx=Math.random()*512; ky=Math.random()*512; kr=4+Math.random()*10;
+    for(r2=kr;r2>0;r2-=2){
+      g.strokeStyle='#5e3a20'; g.globalAlpha=0.22; g.lineWidth=1.5;
+      g.beginPath(); g.ellipse(kx,ky,r2*1.6,r2,0.3,0,Math.PI*2); g.stroke();
+    }
+  }
+  g.globalAlpha=1;
+  var tx2=new THREE.CanvasTexture(cv);
+  tx2.wrapS=tx2.wrapT=THREE.RepeatWrapping;
+  tx2.colorSpace=THREE.SRGBColorSpace;
+  tx2.anisotropy=8;
+  return tx2;
+}
 var frameTex=woodTexture('#3a2412','#1c0f06','#5a3a20');
-var tableTex=woodTexture('#4a2f1a','#241305','#6b4a2c');
-tableTex.repeat.set(3,3);
 function sqPos(r,c){ return new THREE.Vector3(c-4.5,0,r-4.5); }
 /* board squares */
 var squareMeshes=[];
@@ -527,12 +567,24 @@ var trim=new THREE.Mesh(
 );
 trim.position.y=-0.155;
 scene.add(trim);
-/* cafe table */
-var tableMat=new THREE.MeshStandardMaterial({map:tableTex,roughness:0.6,metalness:0.05});
-var table=new THREE.Mesh(new THREE.CylinderGeometry(15,15,1,56),tableMat);
-table.position.y=-1.09;
-table.receiveShadow=true;
-scene.add(table);
+/* round wooden cafe table: warm oak top, rounded bullnose edge, dark pedestal base */
+var cafeTex=cafeWoodTexture(); cafeTex.repeat.set(2,2);
+var cafeMat=new THREE.MeshStandardMaterial({map:cafeTex,roughness:0.55,metalness:0.05});
+var tableTop=new THREE.Mesh(new THREE.CylinderGeometry(11,11,0.7,72),cafeMat);
+tableTop.position.y=-0.94;
+tableTop.receiveShadow=true; tableTop.castShadow=true;
+scene.add(tableTop);
+var tableEdge=new THREE.Mesh(new THREE.TorusGeometry(11,0.35,20,96),cafeMat);
+tableEdge.rotation.x=Math.PI/2; tableEdge.position.y=-0.94;
+tableEdge.castShadow=true;
+scene.add(tableEdge);
+var ironMat=new THREE.MeshStandardMaterial({color:0x191411,roughness:0.45,metalness:0.75});
+var pedestal=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.35,7,32),ironMat);
+pedestal.position.y=-4.79; pedestal.castShadow=true;
+scene.add(pedestal);
+var footBase=new THREE.Mesh(new THREE.CylinderGeometry(3.0,3.3,0.5,48),ironMat);
+footBase.position.y=-8.54; footBase.receiveShadow=true;
+scene.add(footBase);
 /* coordinate labels */
 function labelSprite(txt){
   var cv=document.createElement('canvas'); cv.width=128; cv.height=64;
