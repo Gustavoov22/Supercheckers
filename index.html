@@ -255,19 +255,88 @@ function scBestAIMove(b,depth,forceCapture){
   }
   return bestMs[(Math.random()*bestMs.length)|0];
 }
-/* Cheap heuristic best move for teaching mode. */
+/* Can `attacker` capture the piece sitting on (r,c) right now? */
+function scSquareAttackedBy(b,r,c,attacker){
+  var rr,cc,p,caps,i,j;
+  for(rr=0;rr<SC_N;rr++) for(cc=0;cc<SC_N;cc++){
+    p=b[rr][cc];
+    if(p && scOwner(p)===attacker){
+      caps=scCapturesFor(b,rr,cc);
+      for(i=0;i<caps.length;i++) for(j=0;j<caps[i].caps.length;j++){
+        if(caps[i].caps[j][0]===r && caps[i].caps[j][1]===c) return true;
+      }
+    }
+  }
+  return false;
+}
+/* Does `owner` have another piece (not the one from `exFrom`) that could step onto (r,c)? */
+function scDefendedBy(b,r,c,owner,exFrom){
+  var nb=scClone(b); nb[r][c]=null; /* the piece standing there must not block its own defenders */
+  var rr,cc,p,qm,i;
+  for(rr=0;rr<SC_N;rr++) for(cc=0;cc<SC_N;cc++){
+    p=nb[rr][cc];
+    if(!p || scOwner(p)!==owner) continue;
+    if(exFrom && rr===exFrom[0] && cc===exFrom[1]) continue;
+    qm=scQuietMoves(nb,rr,cc);
+    for(i=0;i<qm.length;i++) if(qm[i].to[0]===r && qm[i].to[1]===c) return true;
+  }
+  return false;
+}
+/* Plain-language advice for a chosen hint move. */
+function scAdviceFor(w){
+  var t,b;
+  if(w.caps>0){
+    t='Take the pieces';
+    b='Grabbing '+w.caps+' enemy piece'+(w.caps>1?'s':'')+' is almost always right. Fewer of theirs means fewer threats to you.';
+  }else if(w.promoted){
+    t='Crown a queen';
+    b='Queens fly any distance and capture in every direction. One queen can run the whole board, so crown one whenever you safely can.';
+  }else if(w.hadUnsafeAlt){
+    t='Play the safe square';
+    b='This piece cannot be taken right away. Never leave a piece hanging where the enemy grabs it for free.';
+  }else if(w.defended){
+    t='Keep pieces protected';
+    b='A teammate covers this square, so your piece is safe standing there. Protected pieces are hard to attack.';
+  }else if(w.center){
+    t='Own the middle';
+    b='Pieces in the center have the most moves and threaten both sides. Drift inward, not toward the edges.';
+  }else{
+    t='Simple developing move';
+    b='Brings a piece into play without risk. Give every move a reason.';
+  }
+  return {t:t,b:b};
+}
+/* Teaching heuristic: principle-based move choice with plain advice attached. */
 function scHeuristicMove(b,turn,forceCapture){
   var moves=scAllMoves(b,turn,forceCapture), i, m, s, best=null, bs=-1e18;
+  var foe = turn==='r' ? 'b' : 'r';
   if(!moves.length) return null;
+  var scored=[], hadUnsafeAlt=false;
   for(i=0;i<moves.length;i++){
     m=moves[i];
-    var applied=scApplyMove(b,m);
-    s = m.caps.length*100 + (applied.promoted?80:0);
-    s += (4.5-Math.abs(m.to[1]-4.5))*3;
-    if(scIsQueen(b[m.from[0]][m.from[1]])) s+=10;
-    if(s>bs){ bs=s; best=m; }
+    var applied=scApplyMove(b,m), nb=applied.board;
+    var tr=m.to[0], tc=m.to[1];
+    var unsafe=scSquareAttackedBy(nb,tr,tc,foe);
+    var defended=scDefendedBy(nb,tr,tc,turn,m.from);
+    s = m.caps.length*120 + (applied.promoted?90:0);
+    s += unsafe ? -70 : 25;
+    if(defended) s += 20;
+    s += (4.5-Math.abs(tc-4.5))*4;
+    if(scIsQueen(b[m.from[0]][m.from[1]])) s += 10;
+    if(unsafe) hadUnsafeAlt=true;
+    scored.push({m:m, s:s, unsafe:unsafe, defended:defended, promoted:applied.promoted});
   }
-  return best;
+  for(i=0;i<scored.length;i++) if(scored[i].s>bs){ bs=scored[i].s; best=scored[i]; }
+  var w={
+    caps:best.m.caps.length, promoted:best.promoted,
+    safe:!best.unsafe, defended:best.defended,
+    hadUnsafeAlt:hadUnsafeAlt && !best.unsafe,
+    center:(best.m.to[1]>=3 && best.m.to[1]<=6)
+  };
+  var adv=scAdviceFor(w);
+  w.title=adv.t;
+  best.m.hintWhy=w;
+  return best.m;
 }
 /*ENGINE-END*/
 /* ================= UI ================= */
@@ -366,17 +435,8 @@ function scDescribe(m){
   return scSqName(m.from[0],m.from[1])+' to '+scSqName(m.to[0],m.to[1])+(m.caps.length?' — takes '+m.caps.length:'');
 }
 function scExplainHtml(m){
-  var p=S.board[m.from[0]][m.from[1]], t, b;
-  if(m.caps.length){
-    t='Capture the pieces';
-    b='This move takes '+m.caps.length+' opponent piece'+(m.caps.length>1?'s':'')+'. Removing enemy pieces is the surest path to winning — take captures whenever they appear.';
-  }else{
-    var promoted=scApplyMove(S.board,m).promoted;
-    if(promoted){ t='Crown a queen'; b='This move promotes your piece to a queen. Queens glide any distance diagonally and capture in every direction.'; }
-    else if(m.to[1]>=3 && m.to[1]<=6){ t='Control the center'; b='Central squares give a piece the most options. A good developing move.'; }
-    else { t='Solid developing move'; b='Advances your position while keeping your structure safe.'; }
-  }
-  return '<h4>'+t+'</h4><p>'+b+'</p>';
+  var adv=scAdviceFor(m.hintWhy||{caps:0});
+  return '<h4>'+adv.t+'</h4><p>'+adv.b+'</p>';
 }
 function scRecord(w){
   S.stats.games.unshift({w:w,moves:S.moveCount,at:Date.now(),ai:!!S.settings.ai});
@@ -412,7 +472,7 @@ function scHint(){
   if(!m){ S.explanation=''; scSave(); return; }
   scEphemeral.hint=m;
   S.explanation=scExplainHtml(m);
-  S.status='Hint: '+scDescribe(m);
+  S.status='Hint: '+scDescribe(m)+' — '+((m.hintWhy&&m.hintWhy.title)||'best move');
   scSave();
 }
 function scAI(){
