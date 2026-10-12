@@ -108,13 +108,17 @@ function scClone(b){ return b.map(function(row){ return row.slice(); }); }
 function scCapturesFor(b,r,c){
   var p=b[r][c]; if(!p) return [];
   var q=scIsQueen(p), me=scOwner(p), out=[], seen={};
-  function dfs(bd,br,bc,path,caps){
+  function wasJumped(jumped,mr,mc){
+    for(var k=0;k<jumped.length;k++) if(jumped[k][0]===mr&&jumped[k][1]===mc) return true;
+    return false;
+  }
+  function dfs(bd,br,bc,path,caps,jumped){
     var extended=false;
     function leg(lr,lc,mr,mc){
       var nb=scClone(bd);
-      nb[mr][mc]=null; nb[br][bc]=null; nb[lr][lc]=p;
+      nb[br][bc]=null; nb[lr][lc]=p;
       extended=true;
-      dfs(nb,lr,lc,path.concat([[lr,lc]]),caps.concat([[mr,mc]]));
+      dfs(nb,lr,lc,path.concat([[lr,lc]]),caps.concat([[mr,mc]]),jumped.concat([[mr,mc]]));
     }
     var d,dr,dc,mr,mc,lr,lc,mid;
     if(!q){
@@ -123,7 +127,7 @@ function scCapturesFor(b,r,c){
         mr=br+dr; mc=bc+dc; lr=br+2*dr; lc=bc+2*dc;
         if(!scInB(lr,lc)) continue;
         mid=bd[mr][mc];
-        if(mid && scOwner(mid)!==me && !bd[lr][lc]) leg(lr,lc,mr,mc);
+        if(mid && scOwner(mid)!==me && !bd[lr][lc] && !wasJumped(jumped,mr,mc)) leg(lr,lc,mr,mc);
       }
     }else{
       for(d=0;d<4;d++){
@@ -132,7 +136,7 @@ function scCapturesFor(b,r,c){
         while(scInB(mr,mc) && !bd[mr][mc]){ mr+=dr; mc+=dc; }
         if(!scInB(mr,mc)) continue;
         mid=bd[mr][mc];
-        if(!mid || scOwner(mid)===me) continue;
+        if(!mid || scOwner(mid)===me || wasJumped(jumped,mr,mc)) continue;
         lr=mr+dr; lc=mc+dc;
         while(scInB(lr,lc) && !bd[lr][lc]){ leg(lr,lc,mr,mc); lr+=dr; lc+=dc; }
       }
@@ -146,7 +150,7 @@ function scCapturesFor(b,r,c){
       }
     }
   }
-  dfs(scClone(b),r,c,[],[]);
+  dfs(scClone(b),r,c,[],[],[]);
   return out;
 }
 function scQuietMoves(b,r,c){
