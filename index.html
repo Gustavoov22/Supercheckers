@@ -1,55 +1,91 @@
 <style>
 html,body{background:#000;margin:0}
-#sc-root{--hatch-widget-bg:#000;--hatch-widget-text:#f2f2f7;--hatch-widget-muted:#9a9aa0;--hatch-widget-border:#2e2e32;--hatch-widget-surface:#1b1b1e;--hatch-widget-surface-muted:#26262a;--hatch-widget-accent:#0a84ff;--hatch-widget-on-accent:#fff;--hatch-widget-focus:#0a84ff;--hatch-widget-shadow:0 4px 16px rgba(0,0,0,.6);background:#000}
-#sc-root{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--hatch-widget-text);width:100%;max-width:540px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px;align-items:center}
+#sc-root{--hatch-widget-bg:#000;--hatch-widget-text:#f4f1e8;--hatch-widget-muted:#a09a8a;--hatch-widget-border:#2b2b2e;--hatch-widget-surface:#141416;--hatch-widget-surface-muted:#1e1e21;--hatch-widget-accent:#e8b64c;--hatch-widget-on-accent:#1a1206;--hatch-widget-focus:#e8b64c;--hatch-widget-shadow:0 10px 30px rgba(0,0,0,.6);background:#000}
+#sc-root{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--hatch-widget-text);width:100%;max-width:560px;margin:0 auto;padding:16px 14px 30px;display:flex;flex-direction:column;gap:12px;align-items:center}
 #sc-root *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-.sc-title{font-size:22px;font-weight:700;margin:2px 0 0;letter-spacing:-.02em}
-.sc-sub{font-size:12px;color:var(--hatch-widget-muted);margin:0}
-.sc-area{display:grid;grid-template-columns:22px 1fr;grid-template-rows:1fr 22px;gap:4px;width:min(94vw,440px)}
-.sc-ranks{display:flex;flex-direction:column;justify-content:space-around;font-size:10px;font-weight:600;color:var(--hatch-widget-muted);text-align:center}
-.sc-files{display:flex;justify-content:space-around;font-size:10px;font-weight:600;color:var(--hatch-widget-muted);grid-column:2;text-align:center}
-.sc-board{display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);aspect-ratio:1/1;border-radius:12px;overflow:hidden;border:1px solid var(--hatch-widget-border);box-shadow:var(--hatch-widget-shadow);touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.sc-brand{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:4px}
+.sc-logo{width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,#f5c542,#b8860b);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(232,182,76,.35)}
+.sc-logo svg{width:26px;height:26px;color:#1a1206}
+.sc-title{font-size:25px;font-weight:800;margin:8px 0 0;letter-spacing:.16em}
+.sc-title .gold{color:var(--hatch-widget-accent)}
+.sc-sub{font-size:11px;color:var(--hatch-widget-muted);margin:4px 0 0;letter-spacing:.14em;text-transform:uppercase}
+.sc-infobar{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:16px;padding:10px 14px}
+.sc-turn{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;min-width:0}
+.sc-turn-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.sc-turn-dot.r{background:#ff5a52;box-shadow:0 0 10px #ff5a52;animation:sc-pulse 1.6s infinite}
+.sc-turn-dot.b{background:#ececf0;box-shadow:0 0 10px rgba(236,236,240,.8);animation:sc-pulse 1.6s infinite}
+@keyframes sc-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#sc-turn-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-infobar-meta{display:flex;gap:6px;align-items:center;flex:none}
+.sc-chip{font-size:12px;font-weight:600;color:var(--hatch-widget-muted);background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:999px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.sc-minidot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.sc-minidot.r{background:radial-gradient(circle at 35% 30%,#ff8a80,#d21f26 72%)}
+.sc-minidot.b{background:radial-gradient(circle at 35% 30%,#9a9aa0,#0c0c0e 72%)}
+.sc-area{display:grid;grid-template-columns:22px 1fr;grid-template-rows:1fr 22px;gap:4px;width:min(94vw,460px)}
+.sc-ranks{display:flex;flex-direction:column;justify-content:space-around;font-size:10px;font-weight:700;color:var(--hatch-widget-muted);text-align:center}
+.sc-files{display:flex;justify-content:space-around;font-size:10px;font-weight:700;color:var(--hatch-widget-muted);grid-column:2;text-align:center}
+.sc-board{display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);aspect-ratio:1/1;border-radius:14px;overflow:hidden;border:6px solid #2a1e10;box-shadow:var(--hatch-widget-shadow),0 0 0 1px #3d3d42;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .sc-sq{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;min-width:0;min-height:0}
-.sc-sq.l{background:#f0e6d3}
-.sc-sq.d{background:#bd9260}
-.sc-pc{width:74%;height:74%;border-radius:50%;position:relative;box-shadow:0 2px 5px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
-.sc-pc.r{background:radial-gradient(circle at 35% 30%,#ff8a80,#e5322b 72%)}
-.sc-pc.b{background:radial-gradient(circle at 35% 30%,#636366,#141416 72%)}
-.sc-pc.q{outline:3px solid #ffd60a;outline-offset:-3px}
-.sc-pc.q svg{width:58%;height:58%;color:#ffd60a;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
-.sc-sq.sel{background:#ffd60a !important}
-.sc-sq.hsrc{background:#30d158 !important}
-.sc-sq.hdst{background:#ffd60a !important}
-.sc-sq.hcap{background:#ff453a !important}
-.sc-dot{position:absolute;width:24%;height:24%;border-radius:50%;background:rgba(20,20,20,.32);pointer-events:none}
-.sc-controls{width:100%;display:flex;flex-direction:column;gap:8px;align-items:stretch}
-.sc-row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
-.sc-btn{border:1px solid var(--hatch-widget-border);background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;min-height:42px;font-family:inherit}
+.sc-sq.l{background:#e9d6a8}
+.sc-sq.d{background:#8f5f36}
+.sc-pc{width:76%;height:76%;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 6px rgba(0,0,0,.45),inset 0 2px 3px rgba(255,255,255,.28),inset 0 -3px 5px rgba(0,0,0,.35)}
+.sc-pc.r{background:radial-gradient(circle at 35% 28%,#ff9a90,#e5322b 62%,#a3121a)}
+.sc-pc.b{background:radial-gradient(circle at 35% 28%,#7a7a82,#2a2a2e 62%,#060607)}
+.sc-pc.q{outline:3px solid #f5c542;outline-offset:-3px}
+.sc-pc.q svg{width:56%;height:56%;color:#f5c542;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.sc-sq.sel{box-shadow:inset 0 0 0 3px #f5c542,inset 0 0 22px rgba(245,197,66,.6)}
+.sc-sq.hsrc{box-shadow:inset 0 0 0 3px #30d158,inset 0 0 18px rgba(48,209,88,.5)}
+.sc-sq.hdst{box-shadow:inset 0 0 0 3px #f5c542,inset 0 0 18px rgba(245,197,66,.5)}
+.sc-sq.hcap{box-shadow:inset 0 0 0 3px #ff453a,inset 0 0 18px rgba(255,69,58,.55)}
+.sc-dot{position:absolute;width:26%;height:26%;border-radius:50%;background:radial-gradient(circle,rgba(245,197,66,.95) 30%,rgba(245,197,66,.25) 70%);pointer-events:none;box-shadow:0 0 8px rgba(245,197,66,.5)}
+.sc-controls{width:100%;display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.sc-card{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:18px;padding:12px 16px;width:100%}
+.sc-card-label{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--hatch-widget-muted);text-transform:uppercase;margin-bottom:6px}
+.sc-card-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0}
+.sc-card-row + .sc-card-row{border-top:1px solid var(--hatch-widget-border)}
+.sc-switch{position:relative;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:600;cursor:pointer;user-select:none}
+.sc-switch input{position:absolute;opacity:0;width:0;height:0}
+.sc-switch .tk{width:46px;height:27px;border-radius:14px;background:#2c2c2e;border:1px solid var(--hatch-widget-border);position:relative;flex:none;transition:background .18s}
+.sc-switch .tk::after{content:'';position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#8e8e93;transition:left .18s,background .18s}
+.sc-switch input:checked + .tk{background:var(--hatch-widget-accent);border-color:transparent}
+.sc-switch input:checked + .tk::after{left:20px;background:#1a1206}
+.sc-seg{display:flex;background:#000;border:1px solid var(--hatch-widget-border);border-radius:13px;padding:3px;gap:3px;flex:1}
+.sc-seg-btn{flex:1;border:0;background:transparent;color:var(--hatch-widget-muted);font-family:inherit;font-size:13px;font-weight:700;padding:9px 6px;border-radius:10px;cursor:pointer;transition:background .15s,color .15s}
+.sc-seg-btn.on{background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent)}
+.sc-actions{display:flex;gap:8px;width:100%}
+.sc-btn{flex:1;border:1px solid var(--hatch-widget-border);background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border-radius:15px;padding:13px 8px;font-size:14px;font-weight:700;cursor:pointer;min-height:46px;font-family:inherit;transition:transform .08s}
 .sc-btn:active{transform:scale(.97)}
-.sc-btn.primary{background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);border-color:transparent}
-.sc-btn.on{background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);border-color:transparent}
-.sc-status{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:10px;padding:10px 14px;font-size:14px;font-weight:500;text-align:center;min-height:42px;display:flex;align-items:center;justify-content:center;width:100%}
-.sc-card{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:12px;padding:10px 14px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center;width:100%}
-.sc-toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;cursor:pointer}
-.sc-toggle input{width:18px;height:18px;accent-color:var(--hatch-widget-accent);cursor:pointer}
-.sc-sel{background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;cursor:pointer}
-.sc-explain{background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:12px;padding:10px 14px;font-size:13px;width:100%}
-.sc-explain h4{margin:0 0 4px;font-size:13px}
-.sc-explain p{margin:0;color:var(--hatch-widget-muted)}
+.sc-btn.gold{background:linear-gradient(145deg,#f5c542,#d99a26);border:0;color:#1a1206}
+.sc-status{font-size:13px;color:var(--hatch-widget-muted);text-align:center;min-height:20px;padding:0 8px}
+.sc-explain{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-left:3px solid var(--hatch-widget-accent);border-radius:14px;padding:12px 16px;font-size:13px;width:100%}
+.sc-explain h4{margin:0 0 4px;font-size:14px;color:var(--hatch-widget-accent)}
+.sc-explain p{margin:0;color:var(--hatch-widget-text);line-height:1.45}
 .sc-hidden{display:none !important}
-.sc-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
-.sc-modal-card{background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);border-radius:16px;padding:20px;width:min(92vw,400px);max-height:80vh;overflow:auto;position:relative;box-shadow:var(--hatch-widget-shadow)}
-.sc-modal-card h3{margin:0 0 12px;font-size:18px}
-.sc-x{position:absolute;top:12px;right:12px;min-height:0;padding:6px 12px;font-size:16px;line-height:1}
-.sc-tabs{display:flex;gap:6px;margin-bottom:12px}
-.sc-tab{flex:1;min-height:38px;font-size:13px}
-.sc-rec{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:13px}
+.sc-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.sc-modal-card{background:var(--hatch-widget-surface);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);border-radius:20px;padding:22px;width:min(92vw,400px);max-height:80vh;overflow:auto;position:relative;box-shadow:var(--hatch-widget-shadow)}
+.sc-modal-card h3{margin:0 0 14px;font-size:19px;letter-spacing:.02em}
+.sc-x{position:absolute;top:14px;right:14px;min-height:0;padding:8px 14px;font-size:16px;line-height:1}
+.sc-tabs{display:flex;gap:6px;margin-bottom:14px;background:#000;border:1px solid var(--hatch-widget-border);border-radius:13px;padding:3px}
+.sc-tab{flex:1;min-height:38px;font-size:13px;border:0;background:transparent;color:var(--hatch-widget-muted)}
+.sc-tab.on{background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent)}
+.sc-rec{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:12px;padding:11px 13px;margin-bottom:6px;font-size:13px}
 .sc-muted{color:var(--hatch-widget-muted);font-size:13px}
 .sc-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);font-size:12px;font-weight:700;margin-right:6px}
 </style>
 <div id="sc-root">
-  <h1 class="sc-title">Supercheckers</h1>
-  <p class="sc-sub">10x10 checkers &middot; queens &middot; optional AI opponent</p>
+  <div class="sc-brand">
+    <div class="sc-logo"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.5 6.5 6 10l6-7 6 7 3.5-3.5L20 18.5H4L2.5 6.5z"/></svg></div>
+    <h1 class="sc-title">SUPER<span class="gold">CHECKERS</span></h1>
+    <p class="sc-sub">International draughts &middot; 10 &times; 10</p>
+  </div>
+  <div class="sc-infobar">
+    <div class="sc-turn"><span class="sc-turn-dot r" id="sc-turn-dot"></span><span id="sc-turn-label">Red to move</span></div>
+    <div class="sc-infobar-meta">
+      <span class="sc-chip" id="sc-moves">Move 0</span>
+      <span class="sc-chip" title="Red pieces captured"><span class="sc-minidot r"></span><span id="sc-cap-r">0</span></span>
+      <span class="sc-chip" title="Black pieces captured"><span class="sc-minidot b"></span><span id="sc-cap-b">0</span></span>
+    </div>
+  </div>
   <div class="sc-area">
     <div class="sc-ranks" id="sc-ranks"></div>
     <div class="sc-board" id="sc-board" role="grid" aria-label="Checkers board"></div>
@@ -57,24 +93,34 @@ html,body{background:#000;margin:0}
     <div class="sc-files" id="sc-files"></div>
   </div>
   <div class="sc-controls">
-    <div class="sc-row">
-      <label class="sc-toggle"><input type="checkbox" id="sc-teaching"> Teaching mode</label>
+    <div class="sc-card">
+      <div class="sc-card-label">Opponent</div>
+      <div class="sc-card-row">
+        <label class="sc-switch"><input type="checkbox" id="sc-ai"><span class="tk"></span><span>Play vs AI</span></label>
+      </div>
+      <div class="sc-card-row sc-hidden" id="sc-depth-row">
+        <div class="sc-seg" id="sc-depth" role="group" aria-label="AI difficulty">
+          <button class="sc-seg-btn" data-depth="1">Easy</button>
+          <button class="sc-seg-btn" data-depth="3">Medium</button>
+          <button class="sc-seg-btn" data-depth="5">Hard</button>
+        </div>
+      </div>
     </div>
-    <div class="sc-row">
+    <div class="sc-card">
+      <div class="sc-card-label">Rules &amp; help</div>
+      <div class="sc-card-row">
+        <label class="sc-switch"><input type="checkbox" id="sc-force" checked><span class="tk"></span><span>Force capture &middot; most pieces</span></label>
+      </div>
+      <div class="sc-card-row">
+        <label class="sc-switch"><input type="checkbox" id="sc-teaching"><span class="tk"></span><span>Teaching mode</span></label>
+      </div>
+    </div>
+    <div class="sc-actions">
       <button class="sc-btn" id="sc-undo">Undo</button>
-      <button class="sc-btn primary" id="sc-reset">Reset</button>
+      <button class="sc-btn gold" id="sc-reset">Reset</button>
       <button class="sc-btn" id="sc-stats">Leaderboard</button>
     </div>
     <div class="sc-status" id="sc-status">Loading…</div>
-    <div class="sc-card">
-      <label class="sc-toggle"><input type="checkbox" id="sc-ai"> Play vs AI</label>
-      <select class="sc-sel sc-hidden" id="sc-depth" aria-label="AI difficulty">
-        <option value="1">Easy</option>
-        <option value="3" selected>Medium</option>
-        <option value="5">Hard</option>
-      </select>
-      <label class="sc-toggle"><input type="checkbox" id="sc-force" checked> Force capture · most pieces</label>
-    </div>
     <div class="sc-explain sc-hidden" id="sc-explain"></div>
   </div>
   <div class="sc-modal sc-hidden" id="sc-modal" role="dialog" aria-label="Leaderboard">
@@ -434,9 +480,19 @@ function scRender(){
   else { ex.classList.add('sc-hidden'); }
   var aiBox=document.getElementById('sc-ai');
   if(aiBox.checked!==!!S.settings.ai) aiBox.checked=!!S.settings.ai;
-  var dep=document.getElementById('sc-depth');
-  dep.classList.toggle('sc-hidden',!S.settings.ai);
-  if(dep.value!==String(S.settings.depth)) dep.value=String(S.settings.depth);
+  var depRow=document.getElementById('sc-depth-row');
+  depRow.classList.toggle('sc-hidden',!S.settings.ai);
+  var depBtns=document.getElementById('sc-depth').querySelectorAll('.sc-seg-btn'), bi;
+  for(bi=0;bi<depBtns.length;bi++) depBtns[bi].classList.toggle('on',parseInt(depBtns[bi].getAttribute('data-depth'),10)===S.settings.depth);
+  var rc=0,bc=0,r2,c2,pp;
+  for(r2=0;r2<10;r2++) for(c2=0;c2<10;c2++){ pp=S.board[r2][c2]; if(pp){ if(scOwner(pp)==='r') rc++; else bc++; } }
+  document.getElementById('sc-cap-r').textContent=String(20-rc);
+  document.getElementById('sc-cap-b').textContent=String(20-bc);
+  document.getElementById('sc-moves').textContent='Move '+(Math.floor(S.moveCount/2)+1);
+  var tLabel=document.getElementById('sc-turn-label'), tDot=document.getElementById('sc-turn-dot');
+  var over=/wins the game|Game over/.test(S.status);
+  tLabel.textContent=over?S.status.replace(/\.\s*$/,''):(S.turn==='r'?'Red to move':'Black to move');
+  tDot.className='sc-turn-dot '+(S.turn==='r'?'r':'b');
   var fBox=document.getElementById('sc-force');
   if(fBox.checked!==!!S.settings.force) fBox.checked=!!S.settings.force;
   var tBox=document.getElementById('sc-teaching');
@@ -594,12 +650,15 @@ function scInit(){
   document.getElementById('sc-ai').addEventListener('change', function(e){
     scEphemeral.aiTok++;
     S.settings.ai=e.target.checked;
+    if(!S.settings.ai) S.aiThinking=false;
     scEphemeral.sel=null; scEphemeral.moves=[]; scEphemeral.hint=null;
     scSave();
     if(S.settings.ai) scAI();
   });
-  document.getElementById('sc-depth').addEventListener('change', function(e){
-    S.settings.depth=parseInt(e.target.value,10); scSave();
+  document.getElementById('sc-depth').addEventListener('click', function(e){
+    var b=e.target.closest?e.target.closest('.sc-seg-btn'):null;
+    if(!b) return;
+    S.settings.depth=parseInt(b.getAttribute('data-depth'),10); scSave();
   });
   document.getElementById('sc-force').addEventListener('change', function(e){
     S.settings.force=e.target.checked;
