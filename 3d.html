@@ -480,9 +480,9 @@ function cafeBackdropTexture(){
 scene.background=cafeBackdropTexture();
 scene.fog=new THREE.Fog(0x140b05,24,44);
 var camera=new THREE.PerspectiveCamera(45,1,0.1,120);
-camera.position.set(0,13.5,8.8);
+camera.position.set(0,38.3,24.2);
 camera.lookAt(0,0,0.4);
-/* camera is fixed: the board stays put; taps select pieces */
+/* camera is fixed and pulled back: whole cafe table, cups and backdrop in frame */
 scene.add(new THREE.HemisphereLight(0xfff2dd,0x1a1210,0.55));
 var sun=new THREE.DirectionalLight(0xffe9c4,1.35);
 sun.position.set(7,14,5);
@@ -789,7 +789,8 @@ function goldFlash(r,c){
 }
 /* Animate one full move: slide or jump-arc through each path leg,
    removing captured pieces as they are jumped over. */
-function animateMove(mesh,move){
+function animateMove(mesh,move,timeScale){
+  var ts=timeScale||1; /* AI moves pass 2 for a slower, followable animation */
   animating=true;
   return new Promise(function(resolve){
     var pts=[mesh.position.clone()], i;
@@ -800,7 +801,7 @@ function animateMove(mesh,move){
       var from=pts[li], to=pts[li+1];
       var isCap=li<move.caps.length;
       var capMesh=isCap?pieceMap[pk(move.caps[li][0],move.caps[li][1])]:null;
-      var dur=isCap?0.5:0.32;
+      var dur=(isCap?0.5:0.32)*ts;
       tw(dur,function(k){
         var x=from.x+(to.x-from.x)*k, z=from.z+(to.z-from.z)*k;
         var y=isCap?Math.sin(k*Math.PI)*1.35:0.03*Math.sin(k*Math.PI);
@@ -827,7 +828,7 @@ function scExplainHtml(m){
   var adv=scAdviceFor(m.hintWhy||{caps:0});
   return '<h4>'+adv.t+'</h4><p>'+adv.b+'</p>';
 }
-function scDoMove(m){
+function scDoMove(m,isAI){
   S.history.push({b:JSON.stringify(S.board),t:S.turn,n:S.moveCount});
   if(S.history.length>400) S.history.shift();
   var mesh=pieceMap[pk(m.from[0],m.from[1])];
@@ -848,7 +849,7 @@ function scDoMove(m){
   }
   scSave();
   if(mesh){
-    animateMove(mesh,m).then(function(){
+    animateMove(mesh,m,isAI?2:1).then(function(){
       buildPieces();
       if(res.promoted) goldFlash(m.to[0],m.to[1]);
       scRender();
@@ -879,7 +880,15 @@ function scAI(){
     S.aiThinking=false;
     if(!S.gameActive || S.turn!=='r'){ scSave(); return; }
     var mv=scBestAIMove(S.board,S.settings.depth,S.settings.force);
-    if(mv) scDoMove(mv);
+    if(mv){
+      /* beat so the eye catches the piece, then a slower animation */
+      scEphemeral.sel={r:mv.from[0],c:mv.from[1]}; scEphemeral.moves=[]; scRender();
+      setTimeout(function(){
+        if(tok!==scEphemeral.aiTok) return;
+        if(!S.gameActive || S.turn!=='r'){ scEphemeral.sel=null; scSave(); return; }
+        scDoMove(mv,true);
+      },600);
+    }
     else { S.gameActive=false; scRecord('Black'); S.status='Black wins the game.'; S.explanation=''; scSave(); }
   },450);
 }
@@ -920,6 +929,19 @@ function pickSquare(e){
       if(o.userData && o.userData.sq) return o.userData.sq;
       o=o.parent;
     }
+  }
+  /* fallback: nearest square center to the board-plane hit, so taps stay
+     comfortable now the camera sits further back */
+  var plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+  var pt=new THREE.Vector3();
+  if(raycaster.ray.intersectPlane(plane,pt)){
+    var br=Math.round(pt.z+4.5), bc=Math.round(pt.x+4.5), best=null, bd=0.8;
+    for(var r=Math.max(0,br-1);r<=Math.min(9,br+1);r++)
+      for(var c=Math.max(0,bc-1);c<=Math.min(9,bc+1);c++){
+        var sp=sqPos(r,c), d=Math.hypot(sp.x-pt.x,sp.z-pt.z);
+        if(d<bd){ bd=d; best={r:r,c:c}; }
+      }
+    if(best) return best;
   }
   return null;
 }
